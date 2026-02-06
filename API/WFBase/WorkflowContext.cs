@@ -1,4 +1,6 @@
-﻿namespace API.WFBase
+﻿using Newtonsoft.Json;
+
+namespace API.WFBase
 {
     public class WorkflowContext
     {
@@ -20,4 +22,15 @@
 
 
     }
+
+    //public class WorkflowContext
+    //{
+    //    public Dictionary<string, object> Data { get; set; } = new();
+
+
+    //    public void Set<T>(string key, T value) => Data[key] = value;
+    //    public T Get<T>(string key) => Data.TryGetValue(key, out var v)
+    //    ? JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(v))
+    //    : default;
+    //}
 }

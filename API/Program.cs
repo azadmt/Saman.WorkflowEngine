@@ -1,5 +1,6 @@
 
 using API.WFBase;
+using API.WFBase.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace API

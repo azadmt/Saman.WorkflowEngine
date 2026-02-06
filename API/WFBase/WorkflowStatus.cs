@@ -3,4 +3,4 @@ using System.Text.Json.Serialization;
 
 namespace API.WFBase;
 
-public enum WorkflowStatus { Running, WaitingForUser, Completed }
+public enum WorkflowStatus { Running, Waiting, Completed, Failed }
