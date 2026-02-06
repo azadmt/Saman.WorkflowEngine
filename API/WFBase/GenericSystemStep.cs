@@ -1,28 +1,27 @@
-﻿namespace API.WFBase
+﻿namespace API.WFBase;
+
+public class GenericSystemStep : IWorkflowStep
 {
-    public class GenericSystemStep : IWorkflowStep
+    private readonly string _name;
+    private readonly string? _hook;
+
+
+    public GenericSystemStep(string name, string? hook)
     {
-        private readonly string _name;
-        private readonly string? _hook;
+        _name = name;
+        _hook = hook;
+    }
 
 
-        public GenericSystemStep(string name, string? hook)
+    public string Name => _name;
+
+
+    public async Task ExecuteAsync(WorkflowContext context, IServiceProvider sp)
+    {
+        if (_hook == "PublishEvent")
         {
-            _name = name;
-            _hook = hook;
-        }
-
-
-        public string Name => _name;
-
-
-        public async Task ExecuteAsync(WorkflowContext context, IServiceProvider sp)
-        {
-            if (_hook == "PublishEvent")
-            {
-                var hook = sp.GetRequiredService<IWorkflowHook>();
-                await hook.ExecuteAsync(context);
-            }
+            var hook = sp.GetRequiredService<IWorkflowHook>();
+            await hook.ExecuteAsync(context);
         }
     }
 }

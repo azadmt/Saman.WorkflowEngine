@@ -6,10 +6,10 @@
         public abstract string Role { get; }
 
 
-        public Task ExecuteAsync(WorkflowContext context, IServiceProvider sp)
+        public async Task ExecuteAsync(WorkflowContext context, IServiceProvider sp)
         {
             context.SetData("WaitingRole", Role);
-            return Task.CompletedTask;
+      
         }
 
 

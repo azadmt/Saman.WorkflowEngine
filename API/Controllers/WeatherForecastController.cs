@@ -1,33 +1,73 @@
+﻿using API.WFBase;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
-namespace API.Controllers
+[ApiController]
+[Route("api/workflows")]
+public class WorkflowController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    private readonly WorkflowDbContext _db;
+    private readonly WorkflowEngine _engine;
+
+
+    public WorkflowController(WorkflowDbContext db, WorkflowEngine engine)
     {
-        private static readonly string[] Summaries = new[]
+        _db = db;
+        _engine = engine;
+    }
+
+
+    // 1️⃣ Create Workflow Definition
+    [HttpPost("definitions")]
+    public async Task<Guid> CreateDefinition([FromBody] WorkflowDefinition def)
+    {
+        var entity = new WorkflowDefinitionEntity
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            Id = Guid.NewGuid(),
+            Name = def.Name,
+            DefinitionJson = JsonConvert.SerializeObject(def)
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        _db.Definitions.Add(entity);
+        await _db.SaveChangesAsync();
+        return entity.Id;
+    }
+
+
+    // 2️⃣ Start Workflow Instance
+    //[HttpPost("start/{definitionId}")]
+    //public async Task<Guid> Start(Guid definitionId, [FromBody] Dictionary<string, object> input)
+    //{
+    //    var ctx = new WorkflowContext();
+    //    foreach (var kv in input)
+    //        ctx.SetData(kv.Key, kv.Value);
+
+
+    //    return await _engine.StartAsync(definitionId, ctx);
+    //}
+
+
+
+    [ApiController]
+    [Route("api/tasks")]
+    public class TaskController : ControllerBase
+    {
+        private readonly WorkflowDbContext _db;
+
+
+        public TaskController(WorkflowDbContext db)
         {
-            _logger = logger;
+            _db = db;
         }
 
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+
+        // 3️⃣ Task List for UI
+        [HttpGet("by-role/{role}")]
+        public async Task<IEnumerable<WorkflowTask>> GetTasks(string role)
+        => await _db.Tasks
+        .Where(t => t.Role == role && !t.IsCompleted)
+        .ToListAsync();
     }
 }

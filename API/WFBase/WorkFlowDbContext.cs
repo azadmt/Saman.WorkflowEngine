@@ -6,7 +6,8 @@ namespace API.WFBase
     {
         public DbSet<WorkflowInstance> Workflows => Set<WorkflowInstance>();
 
-
+        public DbSet<WorkflowDefinitionEntity> Definitions => Set<WorkflowDefinitionEntity>();
+        public DbSet<WorkflowTask> Tasks => Set<WorkflowTask>();
         public WorkflowDbContext(DbContextOptions<WorkflowDbContext> options)
         : base(options) { }
     }

@@ -4,9 +4,10 @@ namespace API.WFBase
 {
     public class ConsoleEventHook : IWorkflowHook
     {
-        public Task ExecuteAsync(WorkflowContext context)
+        public async Task ExecuteAsync(WorkflowContext context)
         {
-            Console.WriteLine("📢 EVENT PUBLISHED: " + JsonConvert.SerializeObject(context.Data));
-            return Task.CompletedTask;
+            Console.WriteLine(" EVENT PUBLISHED: " + JsonConvert.SerializeObject(context.Data));
+    
         }
     }
+}

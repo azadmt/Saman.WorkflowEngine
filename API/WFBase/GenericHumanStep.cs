@@ -17,10 +17,9 @@
         public override string Role => _role;
 
 
-        public override Task CompleteAsync(WorkflowContext context, IServiceProvider sp)
+        public override async Task CompleteAsync(WorkflowContext context, IServiceProvider sp)
         {
-            // UI داده‌ها را در Context ست می‌کند
-            return Task.CompletedTask;
+
         }
     }
 }
