@@ -4,8 +4,8 @@ namespace API.WFBase
 {
     public class WorkflowContext
     {
-
-        public Dictionary<string, object> Data { get; private set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Data { get; private set; } =
+            new Dictionary<string, object>();
 
         public void SetData(string key, object value)
         {
@@ -19,8 +19,6 @@ namespace API.WFBase
 
             return (T)value;
         }
-
-
     }
 
     //public class WorkflowContext

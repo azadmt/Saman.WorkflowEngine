@@ -1,6 +1,7 @@
 ﻿namespace API.WFBase;
 
-
-
-
-public enum WorkflowTaskStatus { Open, Completed }
+public enum WorkflowTaskStatus
+{
+    Open,
+    Completed
+}

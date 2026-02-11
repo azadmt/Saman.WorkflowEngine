@@ -1,7 +1,5 @@
 ﻿namespace API.WFBase;
 
-
-
 public class WorkflowDefinition
 {
     public string Name { get; set; }

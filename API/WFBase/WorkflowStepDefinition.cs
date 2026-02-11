@@ -1,6 +1,12 @@
 ﻿namespace API.WFBase;
 
-public enum WorkflowStepType { System, Human, Event }
+public enum WorkflowStepType
+{
+    System,
+    Human,
+    Event
+}
+
 public class WorkflowStepDefinition
 {
     public WorkflowStepType Type { get; set; } = default!;
@@ -9,4 +15,3 @@ public class WorkflowStepDefinition
     public string ApiEndpoint { get; set; }
     public string EventName { get; set; }
 }
-
