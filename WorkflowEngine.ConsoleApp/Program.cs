@@ -56,7 +56,7 @@ class Program
             );
         }
 
-        Console.WriteLine($"State after lab upload: {instance.CurrentStateId}\n");
+     //   Console.WriteLine($"State after lab upload: {instance.CurrentStateId}\n");
         // 6️⃣ Doctor final decision
         if (instance.Status == WorkflowInstanceStatus.Waiting)
         {
@@ -69,7 +69,7 @@ class Program
             );
         }
 
-        Console.WriteLine($"Final State: {instance.CurrentStateId}");
+      //  Console.WriteLine($"Final State: {instance.CurrentStateId}");
         Console.WriteLine($"Workflow Status: {instance.Status}");
     }
 

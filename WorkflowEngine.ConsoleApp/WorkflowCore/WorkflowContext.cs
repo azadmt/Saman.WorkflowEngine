@@ -1,9 +1,8 @@
 using Newtonsoft.Json;
-using System.Text.Json.Serialization;
 
 public class WorkflowContext
 {
-    [JsonInclude]
+    [Newtonsoft.Json.JsonProperty]
     public Dictionary<string, object> Data { get; private set; } = new Dictionary<string, object>();
 
     public void SetData(string key, object value)
@@ -17,6 +16,14 @@ public class WorkflowContext
             return default;
 
         return (T)value;
+    }
+
+    [JsonIgnore]
+    public StateDefinition CurrentStateDefinition { get; set; }
+
+    public IReadOnlyList<TransitionDefinition> GetTransitions()
+    {
+        return CurrentStateDefinition.Transitions;
     }
 
     //public T Get<T>(string key) => Data.TryGetValue(key, out var v)

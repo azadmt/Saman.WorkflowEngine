@@ -53,12 +53,12 @@ public class WorkflowEngine
    )
     {
         var workflowInstance = _workflowEngineRepository.Get(instanceId);
-        var state = GetCurrentStateDefinition(workflowInstance);
+         SetCurrentStateDefinition(workflowInstance);
 
         foreach (var kv in data)
             workflowInstance.Context.SetData(kv.Key, kv.Value);
-        //instance.Context.SetData(kv.Key, JsonSerializer.SerializeToElement(kv.Value));
-
+ 
+        var state = workflowInstance.Context.CurrentStateDefinition;//TO DO : Just check in Execute
         var transition = state.Transitions.Find(t => t.Event == eventName)!;
         workflowInstance.CurrentStateId = transition.To;
         workflowInstance.Status = WorkflowInstanceStatus.Running;
@@ -68,33 +68,35 @@ public class WorkflowEngine
 
     private void Execute(WorkflowInstance instance)
     {
-        var state = GetCurrentStateDefinition(instance);
+        SetCurrentStateDefinition(instance);
 
-        if (state.Type == StateType.Automatic)
+        var currentState = instance.Context.CurrentStateDefinition;
+
+        if (instance.Context.CurrentStateDefinition.Type == StateType.Automatic)
         {
-            foreach (var activity in state.Activities)
+            foreach (var activity in currentState.Activities)
             {
                 activity.ExecuteAsync(instance.Context);
             }
-
-            var transition = state.Transitions[0];
+            
+            var transition = currentState.Transitions.Where(x => x.Condition(instance.Context)).Single();
             instance.CurrentStateId = transition.To;
             Execute(instance);
         }
-        else if (state.Type == StateType.HumanTask)
+        else if (currentState.Type == StateType.HumanTask)
         {
             instance.Status = WorkflowInstanceStatus.Waiting;
             _workflowTaskRepository.Add(new WorkflowTask
             {
-                Role = state.HumanTask.Role,
+                Role = currentState.HumanTask.Role,
                 WorkflowInstanceId = instance.Id,
-                Inputs= state.HumanTask.Inputs
+                Inputs = currentState.HumanTask.Inputs
             });
-        
+
         }
-        else if (state.Type == StateType.End)
+        else if (currentState.Type == StateType.End)
         {
-            foreach (var activity in state.Activities)
+            foreach (var activity in currentState.Activities)
                 activity.ExecuteAsync(instance.Context);
 
             instance.Status = WorkflowInstanceStatus.Completed;
@@ -109,8 +111,10 @@ public class WorkflowEngine
         await activity.ExecuteAsync(instance.Context);
     }
 
-    private StateDefinition GetCurrentStateDefinition(WorkflowInstance instance)
+    private void SetCurrentStateDefinition(WorkflowInstance instance)
     {
-        return _definitions[instance.WorkflowDefinitionId].States[instance.CurrentStateId];
+        instance.Context.CurrentStateDefinition = _definitions[instance.WorkflowDefinitionId]
+            .States[instance.CurrentStateId]
+            ;
     }
 }

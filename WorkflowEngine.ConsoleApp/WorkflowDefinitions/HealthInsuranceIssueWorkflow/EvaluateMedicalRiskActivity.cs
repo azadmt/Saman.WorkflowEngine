@@ -9,8 +9,16 @@ public class EvaluateMedicalRiskActivity : WorkflowActivity
     public override async Task ExecuteAsync(WorkflowContext context)
     {
         var isSmoker = context.GetData<bool>("Smoker");
+        var hasSergrry = context.GetData<bool>("Sergery");
 
-        Console.WriteLine("call EvaluateMedicalRiskActivity");
+        var riskLevel = "low";
+        if ((isSmoker & hasSergrry))
+              riskLevel = "high";
+
+        if ((isSmoker || hasSergrry))
+            riskLevel = "medium";
+
+        context.SetData("RiskLevel", riskLevel);
     }
 }
 

@@ -22,8 +22,14 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
 
                     },
                     Transitions = {
-                        new TransitionDefinition { To = "WaitingForDoctor" },
-                        new TransitionDefinition { To = "Rejected" }
+                        new TransitionDefinition {
+                            To = "WaitingForDoctor",
+                         Condition=(p)=> p.GetData<string>("RiskLevel")=="medium"},
+                        new TransitionDefinition {
+                            To = "Rejected" ,
+                            Condition=(p)=> p.GetData<string>("RiskLevel")=="high",
+
+                        }
 
                     }
                 },
@@ -59,8 +65,8 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
                     {
                         Role = "Customer",
                         UiContract = "UploadLabResult",
-                        Inputs = new List<TaskInput>() { 
-                            new TaskInput { Name = "DocUrl", Type = typeof(string).Name } 
+                        Inputs = new List<TaskInput>() {
+                            new TaskInput { Name = "DocUrl", Type = typeof(string).Name }
                         }
                     },
                     Transitions =
