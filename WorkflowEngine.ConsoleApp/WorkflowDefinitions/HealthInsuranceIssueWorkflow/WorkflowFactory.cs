@@ -1,7 +1,7 @@
 ﻿
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
 
-public class HealthInsuranceWorkflow : IWorkflowDefinition
+public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 {
     public WorkflowDefinition GetDefinition()
     {
@@ -14,11 +14,12 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
             {
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
-                    Id = "AutoMedicalCheck",
+                    Name = "AutoMedicalCheck",
                     Type = StateType.Automatic,
                     Activities =
                     {
-                        new EvaluateMedicalRiskActivity()
+                        //call api for policy
+                        new EvaluateMedicalRiskActivity(new HttpClient())
 
                     },
                     Transitions = {
@@ -35,7 +36,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
                 },
                 ["WaitingForDoctor"] = new StateDefinition
                 {
-                    Id = "WaitingForDoctor",
+                    Name = "WaitingForDoctor",
                     Type = StateType.HumanTask,
                     Activities =
                     {
@@ -59,7 +60,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
                 },
                 ["WaitingForLab"] = new StateDefinition
                 {
-                    Id = "WaitingForLab",
+                    Name = "WaitingForLab",
                     Type = StateType.HumanTask,
                     HumanTask = new HumanTaskDefinition
                     {
@@ -76,7 +77,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
                 },
                 ["Approved"] = new StateDefinition
                 {
-                    Id = "Approved",
+                    Name = "Approved",
                     Type = StateType.End,
                     Activities =
                     {
@@ -87,7 +88,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinition
                 },
                 ["Rejected"] = new StateDefinition
                 {
-                    Id = "Rejected",
+                    Name = "Rejected",
                     Type = StateType.End,
 
                     Activities =

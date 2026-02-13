@@ -10,13 +10,13 @@ namespace WorkflowCore;
 
 public class WorkflowEngine
 {
-    private Dictionary<string, WorkflowDefinition> _definitions = new();
-    private readonly WorkflowRepository _workflowEngineRepository;
+    private Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
+    private readonly WorkflowRepository _workflowRepository;
     private readonly WorkflowTaskRepository _workflowTaskRepository;
 
-    public WorkflowEngine(WorkflowRepository workflowEngineRepository, WorkflowTaskRepository workflowTaskRepository)
+    public WorkflowEngine(WorkflowRepository workflowRepository, WorkflowTaskRepository workflowTaskRepository)
     {
-        _workflowEngineRepository = workflowEngineRepository;
+        _workflowRepository = workflowRepository;
         _workflowTaskRepository = workflowTaskRepository;
     }
 
@@ -24,17 +24,17 @@ public class WorkflowEngine
     {
         foreach (var d in definitions)
         {
-            _definitions[d.GetId()] = d;
+            _workflowRegistry[d.GetId()] = d;
         }
     }
 
     public WorkflowInstance Start(string workflowName, int workflowVersion, Dictionary<string, object> input)
     {
-        var def = _definitions[$"{workflowName}-V{workflowVersion}"];
+        var def = _workflowRegistry[$"{workflowName}-V{workflowVersion}"];
         var instance = new WorkflowInstance
         {
             WorkflowDefinitionId = def.GetId(),
-            CurrentStateId = def.StartState
+            CurrentStateName = def.StartState
         };
 
         foreach (var kv in input)
@@ -52,7 +52,7 @@ public class WorkflowEngine
        Dictionary<string, object> data
    )
     {
-        var workflowInstance = _workflowEngineRepository.Get(instanceId);
+        var workflowInstance = _workflowRepository.Get(instanceId);
          SetCurrentStateDefinition(workflowInstance);
 
         foreach (var kv in data)
@@ -60,7 +60,7 @@ public class WorkflowEngine
  
         var state = workflowInstance.Context.CurrentStateDefinition;//TO DO : Just check in Execute
         var transition = state.Transitions.Find(t => t.Event == eventName)!;
-        workflowInstance.CurrentStateId = transition.To;
+        workflowInstance.CurrentStateName = transition.To;
         workflowInstance.Status = WorkflowInstanceStatus.Running;
 
         Execute(workflowInstance);
@@ -80,7 +80,7 @@ public class WorkflowEngine
             }
             
             var transition = currentState.Transitions.Where(x => x.Condition(instance.Context)).Single();
-            instance.CurrentStateId = transition.To;
+            instance.CurrentStateName = transition.To;
             Execute(instance);
         }
         else if (currentState.Type == StateType.HumanTask)
@@ -102,19 +102,19 @@ public class WorkflowEngine
             instance.Status = WorkflowInstanceStatus.Completed;
         }
 
-        _workflowEngineRepository.Save(instance);
+        _workflowRepository.Save(instance);
     }
 
-    private async Task RunActivity(WorkflowActivity act, WorkflowInstance instance)
+    private async Task RunActivity(IWorkflowActivity act, WorkflowInstance instance)
     {
-        var activity = (WorkflowActivity)Activator.CreateInstance(Type.GetType(act.Name));
+        var activity = (IWorkflowActivity)Activator.CreateInstance(Type.GetType(act.Name));
         await activity.ExecuteAsync(instance.Context);
     }
 
     private void SetCurrentStateDefinition(WorkflowInstance instance)
     {
-        instance.Context.CurrentStateDefinition = _definitions[instance.WorkflowDefinitionId]
-            .States[instance.CurrentStateId]
+        instance.Context.CurrentStateDefinition = _workflowRegistry[instance.WorkflowDefinitionId]
+            .States[instance.CurrentStateName]
             ;
     }
 }

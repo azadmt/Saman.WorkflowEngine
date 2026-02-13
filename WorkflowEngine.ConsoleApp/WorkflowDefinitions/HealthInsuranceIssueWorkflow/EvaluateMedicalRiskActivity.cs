@@ -2,11 +2,15 @@ using System;
 
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
 
-public class EvaluateMedicalRiskActivity : WorkflowActivity
+public class EvaluateMedicalRiskActivity : IWorkflowActivity
 {
-    //   public override string Name => this.GetType().FullName;
+    private readonly HttpClient _httpClient;
 
-    public override async Task ExecuteAsync(WorkflowContext context)
+    public EvaluateMedicalRiskActivity(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+    public  async Task ExecuteAsync(WorkflowContext context)
     {
         var isSmoker = context.GetData<bool>("Smoker");
         var hasSergrry = context.GetData<bool>("Sergery");
@@ -22,41 +26,40 @@ public class EvaluateMedicalRiskActivity : WorkflowActivity
     }
 }
 
-public class DoctorReviewActivity : WorkflowActivity
+public class DoctorReviewActivity : IWorkflowActivity
 {
-    //   public override string Name => this.GetType().FullName;
 
-    public override async Task ExecuteAsync(WorkflowContext context)
+    public  async Task ExecuteAsync(WorkflowContext context)
     {
         Console.WriteLine("call DoctorReviewActivity");
     }
 }
 
-public class ApproveProposalActivity : WorkflowActivity
+public class ApproveProposalActivity : IWorkflowActivity
 {
     //   public override string Name => this.GetType().FullName;
 
-    public override async Task ExecuteAsync(WorkflowContext context)
+    public  async Task ExecuteAsync(WorkflowContext context)
     {
         Console.WriteLine("call ApproveProposalActivity");
     }
 }
 
-public class RejectProposalActivity : WorkflowActivity
+public class RejectProposalActivity : IWorkflowActivity
 {
     //   public override string Name => this.GetType().FullName;
 
-    public override async Task ExecuteAsync(WorkflowContext context)
+    public  async Task ExecuteAsync(WorkflowContext context)
     {
         Console.WriteLine("call RejectProposalActivity");
     }
 }
 
-public class UserCompleteDocActivity : WorkflowActivity
+public class UserCompleteDocActivity : IWorkflowActivity
 {
     //   public override string Name => this.GetType().FullName;
 
-    public override async Task ExecuteAsync(WorkflowContext context)
+    public  async Task ExecuteAsync(WorkflowContext context)
     {
         Console.WriteLine("call UserCompleteDocActivity");
     }

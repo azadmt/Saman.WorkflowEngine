@@ -1,8 +1,8 @@
 public class StateDefinition
 {
-    public string Id { get; set; } = default!;
+    public string Name { get; set; } 
     public StateType Type { get; set; }
-    public List<WorkflowActivity> Activities { get; set; } = new();
+    public List<IWorkflowActivity> Activities { get; set; } = new();
     public List<TransitionDefinition> Transitions { get; set; } = new();
     public HumanTaskDefinition? HumanTask { get; set; }
 }

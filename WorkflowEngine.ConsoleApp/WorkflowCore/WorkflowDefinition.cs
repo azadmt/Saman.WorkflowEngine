@@ -12,7 +12,7 @@ public class WorkflowDefinition
 
 }
 
-public interface IWorkflowDefinition
+public interface IWorkflowDefinitionFactory
 {
     WorkflowDefinition GetDefinition();
 }

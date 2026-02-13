@@ -1,4 +1,4 @@
-public abstract class WorkflowActivity
+public interface IWorkflowActivity
 {
     public virtual string Name => this.GetType().FullName;
 

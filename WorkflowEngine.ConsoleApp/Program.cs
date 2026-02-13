@@ -42,7 +42,7 @@ class Program
             );
         }
 
-        Console.WriteLine($"State after doctor action: {instance.CurrentStateId}\n");
+        Console.WriteLine($"State after doctor action: {instance.CurrentStateName}\n");
 
         // 5️⃣ User uploads lab result
         if (instance.Status == WorkflowInstanceStatus.Waiting)
@@ -75,14 +75,14 @@ class Program
 
     private static IEnumerable<WorkflowDefinition> GetAllWorkflowDefinitions()
     {
-        var workflowDefiniotionType = typeof(IWorkflowDefinition);
+        var workflowDefiniotionType = typeof(IWorkflowDefinitionFactory);
         var workflowDefinitions = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(type => workflowDefiniotionType.IsAssignableFrom(type) && !type.IsInterface);
 
         foreach (var definition in workflowDefinitions)
         {
-           var instance= (IWorkflowDefinition)Activator.CreateInstance(definition);
+           var instance= (IWorkflowDefinitionFactory)Activator.CreateInstance(definition);
 
             yield return instance.GetDefinition();
         }
