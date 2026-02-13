@@ -8,5 +8,19 @@ public class HumanTaskDefinition
 public class TaskInput
 {
     public string Name { get; set; }
-    public string Type { get; set; }
+    public string Lable { get; set; }
+    public InputType Type { get; set; }
+    public List<KeyValuePair<string, string>> Options { get; set; } = new();
+
 }
+
+public enum InputType
+{
+    Number,
+    Text,
+    Date,
+    CheckBox,
+    Radio,
+    Dropdown
+}
+
