@@ -1,25 +1,32 @@
 ﻿
+using WorkflowEngine.ConsoleApp.RuleEngineCore;
+using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;
+
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
 
 public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 {
     public WorkflowDefinition GetDefinition()
     {
+        var rulsetId = "health-underwriting";
+        RegisterRuleSet(rulsetId);
         return new WorkflowDefinition
         {
             Name = "health-underwriting",
             Version = 1,
+            RuleSetId= rulsetId,
             StartState = "AutoMedicalCheck",
             States = new Dictionary<string, StateDefinition>
             {
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
                     Name = "AutoMedicalCheck",
+                    RulesetId= rulsetId,
                     Type = StateType.Automatic,
                     Activities =
                     {
                         //call api for policy
-                        new EvaluateMedicalRiskActivity(new HttpClient())
+                        new EvaluateMedicalRiskActivity()
 
                     },
                     Transitions = {
@@ -48,7 +55,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Role = "Doctor",
                         UiContract = "DoctorMedicalReview",
                         Inputs = new List<TaskInput>() {
-                            new TaskInput { Name = "ExtraRate", Type = typeof(int).Name }
+                            new TaskInput { Name = "ExtraRate", Type = InputType.Number }
                         }
                     },
                     Transitions =
@@ -67,7 +74,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Role = "Customer",
                         UiContract = "UploadLabResult",
                         Inputs = new List<TaskInput>() {
-                            new TaskInput { Name = "DocUrl", Type = typeof(string).Name }
+                            new TaskInput { Name = "DocUrl", Type = InputType.Text }
                         }
                     },
                     Transitions =
@@ -102,5 +109,44 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
         };
     }
 
+
+    private void RegisterRuleSet(string rulesetId)
+    {
+        // کانفیگ قوانین برای این ورک‌فلو خاص
+        var ruleSet = new RuleSet
+        {
+            Id = rulesetId,
+            Rules = new List<RuleBinding>
+            {
+                // قانون سن: برای بیمه سلامت معمولی
+                new()
+                {
+                    Rule = new AgeLimitRule(),
+                    Parameters = new RuleParameters()
+                    .WithParam("minAge",18)
+                    .WithParam("maxAge",79)                
+                },
+                
+        
+                new()
+                {
+                    Rule = new UnderlyingDiseaseRule()                   
+                }
+                //,
+                
+                //// قانون سابقه بیماری
+                //new()
+                //{
+                //    Rule = new ChronicDiseaseRule(),
+                //    Parameters = new RuleParameters
+                //    {
+                //        ["MaxAllowedChronicDiseases"] = 2
+                //    }
+                //}
+            }
+        };
+
+        RuleSetRegistry.RegisterRuleSet(ruleSet);
+    }
 
 }

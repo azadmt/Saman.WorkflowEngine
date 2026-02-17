@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using WorkflowCore;
 
 public class WorkflowInstance
 {
@@ -9,4 +10,6 @@ public class WorkflowInstance
     public WorkflowInstanceStatus Status { get; set; } = WorkflowInstanceStatus.Running;
 
     public WorkflowContext Context { get; set; } = new();
+
+    public List<WorkflowHistoryEntry> workflowHistories { get; set; }=new();
 }

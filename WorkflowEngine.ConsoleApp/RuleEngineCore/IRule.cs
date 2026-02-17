@@ -3,7 +3,7 @@
 public interface IRule
 {
     string Name { get; }
-    string Description { get; }
+    string Title { get; }
     RuleSeverity Severity { get; } // Blocker, Warning, Info
-    Task<RuleResult> EvaluateAsync(WorkflowContext context, RuleParameters parameters);
+    Task<RuleResult> EvaluateAsync(IRuleContext context, RuleParameters parameters);
 }

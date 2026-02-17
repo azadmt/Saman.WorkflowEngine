@@ -1,28 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace WorkflowEngine.ConsoleApp.RuleEngineCore;
 
-public class RuleEngine
+public static class RuleSetRegistry
 {
+    private static readonly Dictionary<string, RuleSet> _ruleSets = new();
+
+    public static void RegisterRuleSet(RuleSet ruleSet)
+    {
+        _ruleSets[ruleSet.Id] = ruleSet;
+    }
+
+    public static RuleSet GetRuleSet(string ruleSetId) 
+    {
+        if (_ruleSets.TryGetValue(ruleSetId, out var ruleSet))
+            return ruleSet;
+        return null;
+    }
 }
 
-public enum RuleSeverity
-{
-    Blocker,   
-    Warning,    
-    Info        
-}
 
 public class RuleResult
 {
+    public string Name { get; set; }
     public bool Passed { get; set; }
     public RuleSeverity Severity { get; set; }
-    public string Message { get; set; }
-    public Dictionary<string, object> Metadata { get; set; } = new();
+    public List<string> Messages { get; set; } = new();
+
 }
 
 public class RuleSet
@@ -31,13 +40,13 @@ public class RuleSet
     public List<RuleBinding> Rules { get; set; } = new();
 
    
-    public async Task<RuleEvaluationResult> EvaluateAsync(WorkflowContext context)
+    public async Task<RuleEvaluationResult> EvaluateAsync(IRuleContext context)
     {
         var results = new List<RuleResult>();
         var blockers = 0;
         var warnings = 0;
 
-        foreach (var binding in Rules)
+        foreach (var binding in Rules.OrderBy(x=>x.Priority))
         {
             var result = await binding.Rule.EvaluateAsync(context, binding.Parameters);
             results.Add(result);
@@ -71,4 +80,6 @@ public class RuleBinding
 {
     public IRule Rule { get; set; }
     public RuleParameters Parameters { get; set; } = new();
+
+    public int Priority { get; set; } = 0;
 }

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-public class WorkflowContext
+public class WorkflowContext: IWorkflowContex, IRuleContext
 {
     [JsonProperty]
     public Dictionary<string, object> Data { get; private set; } = new Dictionary<string, object>();
@@ -25,4 +25,16 @@ public class WorkflowContext
     {
         return CurrentStateDefinition.Transitions;
     }
+}
+
+public interface IDataContext
+{
+    T? GetData<T>(string key);
+    void SetData(string key, object value);
+}
+
+public interface IRuleContext : IDataContext { }
+public interface IWorkflowContex:IDataContext
+{
+    IReadOnlyList<TransitionDefinition> GetTransitions();
 }

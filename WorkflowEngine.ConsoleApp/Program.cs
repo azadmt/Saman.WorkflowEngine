@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using WorkflowCore;
 using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
+using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
 
 namespace WorkflowEngine.ConsoleApp;
 
@@ -25,8 +26,7 @@ class Program
             workflowVersion: 1,
             input: new Dictionary<string, object>
             {
-                ["Smoker"] = true,
-                ["HasSurgeryHistory"] = false
+                ["PolicyRequest"] = HealthPolicyRequest.GenerateSample(withInvlidAgeCount:1),         
             }
         );
      var opentasks=   workflowTaskRepo.GetAvailableTasks("Doctor", null);
