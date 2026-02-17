@@ -5,6 +5,10 @@ public class WorkflowContext: IWorkflowContex, IRuleContext
     [JsonProperty]
     public Dictionary<string, object> Data { get; private set; } = new Dictionary<string, object>();
 
+    [JsonIgnore]
+    public Dictionary<string, object> LocalInput { get; private set; } = new Dictionary<string, object>();
+
+
     public void SetData(string key, object value)
     {
         Data[key] = value;

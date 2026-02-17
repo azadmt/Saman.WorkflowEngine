@@ -1,5 +1,6 @@
 ﻿
 using WorkflowEngine.ConsoleApp.RuleEngineCore;
+using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
 using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;
 
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
@@ -14,14 +15,14 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
         {
             Name = "health-underwriting",
             Version = 1,
-            RuleSetId= rulsetId,
+            RuleSetId = rulsetId,
             StartState = "AutoMedicalCheck",
             States = new Dictionary<string, StateDefinition>
             {
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
                     Name = "AutoMedicalCheck",
-                    RulesetId= rulsetId,
+                    RulesetId = rulsetId,
                     Type = StateType.Automatic,
                     Activities =
                     {
@@ -37,7 +38,10 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                             To = "Rejected" ,
                             Condition=(p)=> p.GetData<string>("RiskLevel")=="high",
 
-                        }
+                        },
+                          new TransitionDefinition {
+                            To = "Approved",
+                         Condition=(p)=> p.GetData<string>("RiskLevel")=="low"}
 
                     }
                 },
@@ -56,7 +60,8 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         UiContract = "DoctorMedicalReview",
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "ExtraRate", Type = InputType.Number }
-                        }
+                        },
+                    
                     },
                     Transitions =
                     {
@@ -69,13 +74,17 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 {
                     Name = "WaitingForLab",
                     Type = StateType.HumanTask,
+
                     HumanTask = new HumanTaskDefinition
                     {
                         Role = "Customer",
                         UiContract = "UploadLabResult",
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "DocUrl", Type = InputType.Text }
-                        }
+                        },
+                        AutoAssigne = (p) => {
+                            return p.GetData<HealthPolicyRequest>("PolicyRequest").PolicyHodler.ToString();
+                            }
                     },
                     Transitions =
                     {
@@ -124,13 +133,13 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     Rule = new AgeLimitRule(),
                     Parameters = new RuleParameters()
                     .WithParam("minAge",18)
-                    .WithParam("maxAge",79)                
+                    .WithParam("maxAge",79)
                 },
-                
-        
+
+
                 new()
                 {
-                    Rule = new UnderlyingDiseaseRule()                   
+                    Rule = new UnderlyingDiseaseRule()
                 }
                 //,
                 

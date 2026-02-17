@@ -12,9 +12,9 @@ public class WorkflowEngine
 {
     private Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
     private readonly WorkflowRepository _workflowRepository;
-    private readonly WorkflowTaskRepository _workflowTaskRepository;
+    private readonly WorkflowTaskService _workflowTaskRepository;
 
-    public WorkflowEngine(WorkflowRepository workflowRepository, WorkflowTaskRepository workflowTaskRepository)
+    public WorkflowEngine(WorkflowRepository workflowRepository, WorkflowTaskService workflowTaskRepository)
     {
         _workflowRepository = workflowRepository;
         _workflowTaskRepository = workflowTaskRepository;
@@ -53,11 +53,11 @@ public class WorkflowEngine
    )
     {
         var workflowInstance = _workflowRepository.Get(instanceId);
-         SetCurrentStateDefinition(workflowInstance);
+        SetCurrentStateDefinition(workflowInstance);
 
         foreach (var kv in data)
             workflowInstance.Context.SetData(kv.Key, kv.Value);
- 
+
         var state = workflowInstance.Context.CurrentStateDefinition;//TO DO : Just check in Execute
         var transition = state.Transitions.Find(t => t.Event == eventName)!;
         workflowInstance.CurrentStateName = transition.To;
@@ -72,16 +72,18 @@ public class WorkflowEngine
 
         var currentState = instance.Context.CurrentStateDefinition;
 
+        instance.AddHistoryEntry();
         if (instance.Context.CurrentStateDefinition.Type == StateType.Automatic)
         {
             foreach (var activity in currentState.Activities)
             {
                 activity.ExecuteAsync(instance.Context);
             }
-            
+
             var transition = currentState.Transitions.Where(x => x.Condition(instance.Context)).Single();
             instance.CurrentStateName = transition.To;
             Execute(instance);
+
         }
         else if (currentState.Type == StateType.HumanTask)
         {
@@ -90,8 +92,11 @@ public class WorkflowEngine
             {
                 Role = currentState.HumanTask.Role,
                 WorkflowInstanceId = instance.Id,
-                Inputs = currentState.HumanTask.Inputs
-            });
+                Inputs = currentState.HumanTask.Inputs,
+                Assignee = currentState.HumanTask.AutoAssigne != null
+                ? currentState?.HumanTask.AutoAssigne.Invoke(instance.Context)
+                : null
+            }); ;
 
         }
         else if (currentState.Type == StateType.End)

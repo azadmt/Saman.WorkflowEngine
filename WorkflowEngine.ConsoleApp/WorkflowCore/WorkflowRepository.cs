@@ -15,9 +15,10 @@ public class WorkflowRepository
 
     public void Save(WorkflowInstance instance)
     {
+        var json = JsonConvert.SerializeObject(instance);
         if (!_db.ContainsKey(instance.Id))
-            _db.Add(instance.Id, JsonConvert.SerializeObject(instance));
+            _db.Add(instance.Id, json);
         else
-            _db[instance.Id] = JsonConvert.SerializeObject(instance);
+            _db[instance.Id] = json;
     }
 }
