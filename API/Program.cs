@@ -1,7 +1,5 @@
-
-using API.WFBase;
-using API.WFBase.Persistence;
 using Microsoft.EntityFrameworkCore;
+using WorkflowBase;
 
 namespace API
 {
@@ -19,16 +17,18 @@ namespace API
             builder.Services.AddSwaggerGen();
 
 
-            builder.Services.AddDbContext<WorkflowDbContext>(o =>
-                        o.UseSqlite("Data Source=workflow.db"));
+            //builder.Services.AddDbContext<WorkflowDbContext>(o =>
+            //            o.UseSqlite("Data Source=workflow.db"));
 
 
             builder.Services.AddHttpClient();
-            builder.Services.AddScoped<IWorkflowHook>(sp =>
-            new ConsoleEventHook());
+            //builder.Services.AddScoped<IWorkflowHook>(sp =>
+            //new ConsoleEventHook());
 
 
-            builder.Services.AddScoped<WorkflowEngine>();
+            builder.Services.AddScoped<WorkflowBase.WorkflowEngine>();
+            builder.Services.AddScoped<WorkflowRepository>();
+            builder.Services.AddScoped<WorkflowTaskService>();
             builder.Services.AddControllers();
             var app = builder.Build();
 

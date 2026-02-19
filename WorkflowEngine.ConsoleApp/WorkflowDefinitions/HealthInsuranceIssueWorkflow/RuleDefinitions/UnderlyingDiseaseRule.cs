@@ -1,4 +1,5 @@
-﻿using WorkflowEngine.ConsoleApp.RuleEngineCore;
+﻿
+using RuleEngine.Base;
 using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
 
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;

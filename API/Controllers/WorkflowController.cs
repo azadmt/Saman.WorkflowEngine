@@ -1,17 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WorkflowBase;
 
 [ApiController]
 [Route("api/workflows")]
 public class WorkflowController : ControllerBase
 {
-    private readonly WorkflowEngine _engine;
+    private readonly WorkflowBase.WorkflowEngine _engine;
 
 
-    public WorkflowController(WorkflowEngine engine)
+    public WorkflowController(WorkflowBase.WorkflowEngine engine)
     => _engine = engine;
 
 
     [HttpPost("start/{code}")]
-    public async Task<Guid> Start(string code, [FromBody] object input)
-    => await _engine.StartAsync(code, input);
+    public IActionResult Start(string code, [FromBody] Dictionary<string,object> input)
+    {
+     _=   _engine.Start(code,1, input);
+        return Ok();
+    }
 }

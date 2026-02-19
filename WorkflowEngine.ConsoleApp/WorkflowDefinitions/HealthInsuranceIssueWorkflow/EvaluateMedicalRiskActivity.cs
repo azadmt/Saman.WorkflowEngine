@@ -1,5 +1,5 @@
-using System;
-using WorkflowEngine.ConsoleApp.RuleEngineCore;
+using RuleEngine.Base;
+using WorkflowBase;
 
 namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
 

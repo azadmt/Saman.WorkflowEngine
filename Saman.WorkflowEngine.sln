@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowEngine.Core", "Work
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowEngine.ConsoleApp", "WorkflowEngine.ConsoleApp\WorkflowEngine.ConsoleApp.csproj", "{A6ABD0B0-0B29-46A1-B464-2E51FB3128DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowHost", "API\WorkflowHost.csproj", "{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

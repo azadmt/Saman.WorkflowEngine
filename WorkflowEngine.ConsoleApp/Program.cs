@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
-using WorkflowCore;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
+using WorkflowBase;
 using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
 
 namespace WorkflowEngine.ConsoleApp;
@@ -18,7 +17,7 @@ class Program
         // 2️⃣ Create engine
         var workflowTaskRepo = new WorkflowTaskService();
         var workfloeRepo = new WorkflowRepository();
-        var engine = new WorkflowCore.WorkflowEngine(workfloeRepo, workflowTaskRepo);
+        var engine = new WorkflowBase.WorkflowEngine(workfloeRepo, workflowTaskRepo);
         engine.RegisterWorkflow(workflowDefinitions);
         // 3️⃣ Start workflow instance with initial variables
         var poicyRequest = HealthPolicyRequest.GenerateSample(underlyingDiseaseCount: 1);
