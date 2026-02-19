@@ -17,7 +17,8 @@ class Program
 
         // 2️⃣ Create engine
         var workflowTaskRepo = new WorkflowTaskService();
-        var engine = new WorkflowCore.WorkflowEngine(new WorkflowRepository(), workflowTaskRepo);
+        var workfloeRepo = new WorkflowRepository();
+        var engine = new WorkflowCore.WorkflowEngine(workfloeRepo, workflowTaskRepo);
         engine.RegisterWorkflow(workflowDefinitions);
         // 3️⃣ Start workflow instance with initial variables
         var poicyRequest = HealthPolicyRequest.GenerateSample(underlyingDiseaseCount: 1);
@@ -29,8 +30,10 @@ class Program
                   ["PolicyRequest"] = poicyRequest,
               }
           );
+
+
         var doctor = new { Role = "Doctor", UserName = "Dr.Ahmadi" };
-      
+
         var opentasks = workflowTaskRepo.GetAvailableTasks(doctor.Role, doctor.UserName);
         foreach (var item in opentasks)
         {
@@ -50,7 +53,7 @@ class Program
         }
 
         Console.WriteLine($"State after doctor action: {instance.CurrentStateName}\n");
-   
+
         // 5️⃣ User uploads lab result
         if (instance.Status == WorkflowInstanceStatus.Waiting)
         {

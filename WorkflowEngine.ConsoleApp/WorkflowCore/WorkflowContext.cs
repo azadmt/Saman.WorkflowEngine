@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 public class WorkflowContext: IWorkflowContex, IRuleContext
 {
@@ -19,10 +19,28 @@ public class WorkflowContext: IWorkflowContex, IRuleContext
         if (!Data.TryGetValue(key, out var value))
             return default;
 
-        return (T)value;
+        // اگر مقدار از نوع صحیح بود، مستقیم برگردان
+        if (value is T typedValue)
+            return typedValue;
+
+        // اگر مقدار از نوع JObject یا JToken بود، دیسریالایز کن
+        if (value is Newtonsoft.Json.Linq.JToken jToken)
+        {
+            return jToken.ToObject<T>();
+        }
+
+        // در غیر اینصورت سعی کن کست کنی (برای انواع اولیه مثل int, string, etc.)
+        try
+        {
+            return (T)value;
+        }
+        catch
+        {
+            return default;
+        }
     }
 
-    [JsonIgnore]
+        [JsonIgnore]
     public StateDefinition CurrentStateDefinition { get; set; }
 
     public IReadOnlyList<TransitionDefinition> GetTransitions()
