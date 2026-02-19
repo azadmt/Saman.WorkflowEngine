@@ -1,4 +1,3 @@
-# Saman.WorkflowEngine
 
 # Workflow Engine Documentation
 
