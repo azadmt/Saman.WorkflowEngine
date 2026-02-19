@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowEngine.ConsoleApp",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowHost", "API\WorkflowHost.csproj", "{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WrokflowDefinition.HealthInsuranceIssue", "WrokflowDefinition.HealthInsuranceIssue\WrokflowDefinition.HealthInsuranceIssue.csproj", "{03D83809-F7DB-49F8-ADC6-4DA31951484F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03D83809-F7DB-49F8-ADC6-4DA31951484F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03D83809-F7DB-49F8-ADC6-4DA31951484F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03D83809-F7DB-49F8-ADC6-4DA31951484F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03D83809-F7DB-49F8-ADC6-4DA31951484F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

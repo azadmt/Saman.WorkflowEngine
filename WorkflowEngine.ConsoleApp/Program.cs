@@ -1,21 +1,24 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using WorkflowBase;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
+using WorkflowEngine.Core.Common;
+using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
 namespace WorkflowEngine.ConsoleApp;
 
 class Program
 {
+
     static void Main()
     {
         Console.WriteLine("=== Health Insurance Workflow Demo ===\n");
 
-
+       
         // 1️⃣ Load workflow definition (normally from DB / JSON)
         var workflowDefinitions = GetAllWorkflowDefinitions();
 
         // 2️⃣ Create engine
-        var workflowTaskRepo = new WorkflowTaskService();
+        var workflowTaskRepo = new WorkflowTaskService(new LiteDB.LiteDatabase("WorkFlowHost.db"));
         var workfloeRepo = new WorkflowRepository();
         var engine = new WorkflowBase.WorkflowEngine(workfloeRepo, workflowTaskRepo);
         engine.RegisterWorkflow(workflowDefinitions);
@@ -99,5 +102,22 @@ class Program
 
             yield return instance.GetDefinition();
         }
+    }
+}
+
+public class Activity
+{
+    public Input<int> Id { get; set; } = new();
+
+    public void run()
+    {
+        Id.Get<int>(null);
+    }
+}
+public class Input<T>
+{
+    public T Get<T>( IDataContext dataContext, [CallerMemberName] string memberName = "")
+    {
+        return default(T);
     }
 }

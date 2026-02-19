@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract
+namespace WrokflowDefinition.HealthInsuranceIssue.DataContract
 {
     public class HealthPolicyRequest
     {

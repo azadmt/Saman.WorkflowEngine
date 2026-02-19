@@ -2,10 +2,10 @@
 public class WorkflowEngine
 {
     private Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
-    private readonly WorkflowRepository _workflowRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly WorkflowTaskService _workflowTaskRepository;
 
-    public WorkflowEngine(WorkflowRepository workflowRepository, WorkflowTaskService workflowTaskRepository)
+    public WorkflowEngine(IWorkflowRepository workflowRepository, WorkflowTaskService workflowTaskRepository)
     {
         _workflowRepository = workflowRepository;
         _workflowTaskRepository = workflowTaskRepository;

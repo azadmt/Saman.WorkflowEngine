@@ -1,7 +1,7 @@
 using RuleEngine.Base;
 using WorkflowBase;
 
-namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
+namespace WrokflowDefinition.HealthInsuranceIssue;
 
 public class EvaluateMedicalRiskActivity : IWorkflowActivity
 {

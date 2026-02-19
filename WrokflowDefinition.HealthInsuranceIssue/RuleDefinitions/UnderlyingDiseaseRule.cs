@@ -1,8 +1,8 @@
 ﻿
 using RuleEngine.Base;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
+using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
-namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;
+namespace WrokflowDefinition.HealthInsuranceIssue.RuleDefinitions;
 
 public class UnderlyingDiseaseRule : IRule
 {

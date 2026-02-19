@@ -1,3 +1,4 @@
+using LiteDB;
 using Microsoft.EntityFrameworkCore;
 using WorkflowBase;
 
@@ -10,7 +11,7 @@ namespace API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -27,8 +28,12 @@ namespace API
 
 
             builder.Services.AddScoped<WorkflowBase.WorkflowEngine>();
-            builder.Services.AddScoped<WorkflowRepository>();
+            builder.Services.AddScoped<IWorkflowRepository,LiteDbWorkflowRepository>();
             builder.Services.AddScoped<WorkflowTaskService>();
+           var workflowDb= builder.Configuration.GetValue<string>("DbName");
+            builder.Services.AddScoped<LiteDatabase>((sp)=> new LiteDatabase(workflowDb));
+
+            
             builder.Services.AddControllers();
             var app = builder.Build();
 

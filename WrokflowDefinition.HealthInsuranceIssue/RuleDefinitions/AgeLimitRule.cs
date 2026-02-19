@@ -1,8 +1,7 @@
 ﻿using RuleEngine.Base;
+using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
-
-namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;
+namespace WrokflowDefinition.HealthInsuranceIssue.RuleDefinitions;
 
 public class AgeLimitRule : IRule
 {

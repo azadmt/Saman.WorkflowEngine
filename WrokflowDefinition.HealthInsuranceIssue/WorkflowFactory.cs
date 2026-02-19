@@ -1,10 +1,10 @@
 ﻿
 using RuleEngine.Base;
 using WorkflowBase;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.RuleDefinitions;
+using WrokflowDefinition.HealthInsuranceIssue.DataContract;
+using WrokflowDefinition.HealthInsuranceIssue.RuleDefinitions;
 
-namespace WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
+namespace WrokflowDefinition.HealthInsuranceIssue;
 
 public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 {

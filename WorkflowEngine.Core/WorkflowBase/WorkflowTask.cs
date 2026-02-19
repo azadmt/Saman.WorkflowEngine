@@ -6,6 +6,7 @@ public class WorkflowTask
     public string Role { get; set; }
     public WorkflowTaskStatus Status { get; set; }
     public string Assignee { get; set; }
+    public DateTimeOffset CompleteTime{ get; set; }
     public List<TaskInput> Inputs { get; set; } = new();
 }
 
