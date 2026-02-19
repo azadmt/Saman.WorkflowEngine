@@ -1,160 +1,103 @@
-﻿// =====================================================
-// WORKFLOW ENGINE (FINAL, CLEAN, EXPLAINED)
-// =====================================================
-// مسئولیت این کلاس:
-// - اجرای Workflow Step به Step
-// - Pause روی HumanStep
-// - Resume بعد از تکمیل Task
-// - Persist State در DB
-// - اجرای Hook (API / Event)
-// =====================================================
-
-using API.WFBase;
+﻿using API.WFBase;
+using API.WFBase.Common;
+using API.WFBase.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using static System.Net.WebRequestMethods;
 
 public class WorkflowEngine
 {
     private readonly WorkflowDbContext _db;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly HttpClient _http;
+    private readonly IEventBus _bus;
 
-    public WorkflowEngine(
-        WorkflowDbContext db,
-        IServiceProvider serviceProvider)
+    public WorkflowEngine(WorkflowDbContext db, HttpClient http, IEventBus bus)
     {
         _db = db;
-        _serviceProvider = serviceProvider;
+        _http = http;
+        _bus = bus;
     }
 
-    // =====================================================
-    // START WORKFLOW FROM DEFINITION
-    // =====================================================
-    // این متد:
-    // 1. Workflow Definition را از DB می‌خواند
-    // 2. Stepها را می‌سازد
-    // 3. Instance جدید ایجاد می‌کند
-    // 4. اجرا را شروع می‌کند
-    // =====================================================
-    public async Task<Guid> StartAsync(WorkflowDefinition definition, WorkflowContext context)
+    public async Task<Guid> StartAsync(string code, object input)
     {
-        var instance = new WorkflowInstance
+        var defEntity = await _db.Definitions
+            .OrderByDescending(x => x.Version)
+            .FirstAsync(x => x.Code == code);
+
+        var instance = new WorkflowInstanceEntity
         {
             Id = Guid.NewGuid(),
-            WorkflowName = definition.Name,
-            Status = WorkflowStatus.Running,
+            DefinitionId = defEntity.Id,
             CurrentStepIndex = 0,
-            ContextJson = JsonConvert.SerializeObject(context)
+            Status = WorkflowStatus.Running,
+            ContextJson = JsonConvert.SerializeObject(input)
         };
 
-        _db.Workflows.Add(instance);
+        _db.Instances.Add(instance);
         await _db.SaveChangesAsync();
 
-        var steps = definition.Steps
-            .Select(WorkflowStepFactory.Create)
-            .ToList();
-
-        await ExecuteAsync(instance, steps);
+        await RunAsync(instance.Id);
         return instance.Id;
     }
- 
-    // =====================================================
-    // COMPLETE HUMAN TASK
-    // =====================================================
-    // این متد توسط UI صدا زده می‌شود
-    // - Task را Complete می‌کند
-    // - Context را Update می‌کند
-    // - Workflow را Resume می‌کند
-    // =====================================================
-    public async Task CompleteHumanTaskAsync(Guid taskId, Dictionary<string, object> inputFromUi)
+
+    public async Task RunAsync(Guid instanceId)
     {
-        var task = await _db.Tasks.FindAsync(taskId)
-            ?? throw new Exception("Task not found");
+        var instance = await _db.Instances.FindAsync(instanceId);
+        var defEntity = await _db.Definitions.FindAsync(instance.DefinitionId);
+        var def = JsonConvert.DeserializeObject<WorkflowDefinition>(defEntity.DefinitionJson);
+        var ctx = JsonConvert.DeserializeObject<WorkflowContext>(instance.ContextJson);
 
-        var instance = await _db.Workflows
-            .FindAsync(task.WorkflowInstanceId)
-            ?? throw new Exception("Workflow not found");
-
-        // Context را برمی‌گردانیم
-        var context = JsonConvert
-            .DeserializeObject<WorkflowContext>(instance.ContextJson)!;
-
-        // داده‌های فرم UI داخل Context می‌رود
-        foreach (var kv in inputFromUi)
-            context.SetData(kv.Key, kv.Value);
-
-        task.IsCompleted = true;
-        instance.Status = WorkflowStatus.Running;
-        instance.CurrentStepIndex++;
-
-        instance.ContextJson = JsonConvert.SerializeObject(context);
-        await _db.SaveChangesAsync();
-
-        // Resume Workflow
-        var definitionEntity = await _db.Definitions
-            .FirstAsync(d => d.Name == instance.WorkflowName);
-
-        var definition = JsonConvert
-            .DeserializeObject<WorkflowDefinition>(definitionEntity.DefinitionJson)!;
-
-        var steps = definition.Steps
-            .Select(WorkflowStepFactory.Create)
-            .ToList();
-
-        await ExecuteAsync(instance, steps);
-    }
-
-    // =====================================================
-    // CORE EXECUTION LOOP
-    // =====================================================
-    // این متد قلب Workflow Engine است
-    // - Loop می‌زند روی Stepها
-    // - اگر HumanStep بود → Pause
-    // - اگر SystemStep بود → Execute
-    // =====================================================
-    private async Task ExecuteAsync(WorkflowInstance instance, List<IWorkflowStep> steps)
-    {
-        // Context را از DB برمی‌گردانیم
-        var context = JsonConvert
-            .DeserializeObject<WorkflowContext>(instance.ContextJson)!;
-
-        while (instance.CurrentStepIndex < steps.Count)
+        while (instance.CurrentStepIndex < def.Steps.Count)
         {
-            var step = steps[instance.CurrentStepIndex];
+            var step = def.Steps[instance.CurrentStepIndex];
 
-            // -----------------------------
-            // HUMAN STEP → PAUSE WORKFLOW
-            // -----------------------------
-            if (step is HumanStep humanStep)
+            if (step.Type == WorkflowStepType.Human)
             {
-                instance.Status = WorkflowStatus.WaitingForUser;
+                _db.Tasks.Add(
+                    new WorkflowTaskEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        WorkflowInstanceId = instance.Id,
+                        Role = step.Role,
+                        Status = WorkflowTaskStatus.Open
+                    }
+                );
 
-                _db.Tasks.Add(new WorkflowTask
-                {
-                    Id = Guid.NewGuid(),
-                    WorkflowInstanceId = instance.Id,
-                    StepName = humanStep.Name,
-                    Role = humanStep.Role,
-                    IsCompleted = false
-                });
-
-                break;
+                instance.Status = WorkflowStatus.Waiting;
+                await _db.SaveChangesAsync();
+                return;
             }
 
-            // -----------------------------
-            // SYSTEM STEP → EXECUTE
-            // -----------------------------
-            await step.ExecuteAsync(context, _serviceProvider);
+            if (step.Type == WorkflowStepType.System)
+                await _http.PostAsJsonAsync(step.ApiEndpoint, ctx.Data);
+
+            if (step.Type == WorkflowStepType.Event)
+                _bus.Publish(step.EventName, ctx.Data);
 
             instance.CurrentStepIndex++;
         }
 
-        // Persist Context + Status
-        instance.ContextJson = JsonConvert.SerializeObject(context);
-
-        if (instance.CurrentStepIndex >= steps.Count)
-            instance.Status = WorkflowStatus.Completed;
-
+        instance.Status = WorkflowStatus.Completed;
+        instance.ContextJson = JsonConvert.SerializeObject(ctx);
         await _db.SaveChangesAsync();
     }
 
+    public async Task CompleteTask(Guid taskId, object payload)
+    {
+        var task = await _db.Tasks.FindAsync(taskId);
+        task.Status = WorkflowTaskStatus.Completed;
+
+        var instance = await _db.Instances.FindAsync(task.WorkflowInstanceId);
+        var ctx = JsonConvert.DeserializeObject<WorkflowContext>(instance.ContextJson);
+
+        foreach (var p in payload.GetType().GetProperties())
+            ctx.SetData(p.Name, p.GetValue(payload));
+
+        instance.Status = WorkflowStatus.Running;
+        instance.CurrentStepIndex++;
+        instance.ContextJson = JsonConvert.SerializeObject(ctx);
+
+        await _db.SaveChangesAsync();
+        await RunAsync(instance.Id);
+    }
 }

@@ -1,40 +1,104 @@
-﻿using WorkflowEngine.Core;
+﻿using System.Reflection;
+using WorkflowCore;
+using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
+using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
 
-namespace WorkflowEngine.ConsoleApp
+namespace WorkflowEngine.ConsoleApp;
+
+class Program
 {
-    internal class Program
+    static void Main()
     {
-        static async Task Main(string[] args)
+        Console.WriteLine("=== Health Insurance Workflow Demo ===\n");
+
+
+        // 1️⃣ Load workflow definition (normally from DB / JSON)
+        var workflowDefinitions = GetAllWorkflowDefinitions();
+
+        // 2️⃣ Create engine
+        var workflowTaskRepo = new WorkflowTaskService();
+        var workfloeRepo = new WorkflowRepository();
+        var engine = new WorkflowCore.WorkflowEngine(workfloeRepo, workflowTaskRepo);
+        engine.RegisterWorkflow(workflowDefinitions);
+        // 3️⃣ Start workflow instance with initial variables
+        var poicyRequest = HealthPolicyRequest.GenerateSample(underlyingDiseaseCount: 1);
+        var instance = engine.Start(
+              workflowName: "health-underwriting",
+              workflowVersion: 1,
+              input: new Dictionary<string, object>
+              {
+                  ["PolicyRequest"] = poicyRequest,
+              }
+          );
+
+
+        var doctor = new { Role = "Doctor", UserName = "Dr.Ahmadi" };
+
+        var opentasks = workflowTaskRepo.GetAvailableTasks(doctor.Role, doctor.UserName);
+        foreach (var item in opentasks)
         {
-            var workflow = new Workflow { Name = "E-Shop Workflow with Dynamic Branching" };
-            workflow.AddStep(new BrowseItemsStep());
-            workflow.AddStep(new AddToCartStep());
+            //TODO 
+            workflowTaskRepo.AssigneTask(item.Id, doctor.Role, doctor.UserName);
+        }
+        // 4️⃣ Doctor opens task
+        if (instance.Status == WorkflowInstanceStatus.Waiting)
+        {
+            Console.WriteLine("--- Doctor reviewing case ---");
 
-            // Add a dynamic conditional branch step
-            workflow.AddStep(new ConditionalBranchStep(async context =>
-            {
-                var paymentMethod = context.GetData<string>("PaymentMethod");
+            engine.Resume(
+                instanceId: instance.Id,
+                eventName: "REQUEST_LAB",
+                data: new Dictionary<string, object> { ["RequestedLab"] = "Blood Test" }
+            );
+        }
 
-                if (paymentMethod == "Cash")
-                {
-                    await new CashPaymentStep().ExecuteAsync(context);
-                }
-                else if (paymentMethod == "CreditCard")
-                {
-                    await new CreditCardPaymentStep().ExecuteAsync(context);
-                    await new AddGiftStep().ExecuteAsync(context);
-                }
-            }));
+        Console.WriteLine($"State after doctor action: {instance.CurrentStateName}\n");
 
-            workflow.AddStep(new ConfirmationEmailStep());
+        // 5️⃣ User uploads lab result
+        if (instance.Status == WorkflowInstanceStatus.Waiting)
+        {
+            Console.WriteLine("--- User uploads lab result ---");
 
-            // Set up the context
-            var context = new WorkflowContext();
-            context.SetData("PaymentMethod", "CreditCard"); // Change to "Cash" to test the other branch
+            engine.Resume(
+                instanceId: instance.Id,
+                eventName: "LAB_UPLOADED",
+                data: new Dictionary<string, object> { ["BloodTestResult"] = "NORMAL" }
+            );
+        }
 
-            // Run the workflow
-            var engine = new WorkflowEngine.Core.WorkflowEngine();
-            await engine.RunWorkflowAsync(workflow, context);
+        //   Console.WriteLine($"State after lab upload: {instance.CurrentStateId}\n");
+        // 6️⃣ Doctor final decision
+        if (instance.Status == WorkflowInstanceStatus.Waiting)
+        {
+            Console.WriteLine("--- Doctor final decision ---");
+
+            engine.Resume(
+                instanceId: instance.Id,
+                eventName: "APPROVE",
+                data: new Dictionary<string, object> { ["ExtraPremium"] = 15 }
+            );
+        }
+
+        Console.WriteLine($"=========================================");
+        foreach (var item in instance.WorkflowHistories)
+        {
+            Console.WriteLine($" {item.Timestamp.DateTime.ToString("dddd, yyyy MMMM dd  HH:mm:ss")} - go to  {item.StateName}- by {item.User}");
+
+        }
+    }
+
+    private static IEnumerable<WorkflowDefinition> GetAllWorkflowDefinitions()
+    {
+        var workflowDefiniotionType = typeof(IWorkflowDefinitionFactory);
+        var workflowDefinitions = Assembly.GetExecutingAssembly()
+    .GetTypes()
+    .Where(type => workflowDefiniotionType.IsAssignableFrom(type) && !type.IsInterface);
+
+        foreach (var definition in workflowDefinitions)
+        {
+            var instance = (IWorkflowDefinitionFactory)Activator.CreateInstance(definition);
+
+            yield return instance.GetDefinition();
         }
     }
 }

@@ -8,3 +8,5 @@ public class WorkflowInstance
     public int CurrentStepIndex { get; set; }
     public string ContextJson { get; set; } = default!;
 }
+
+
