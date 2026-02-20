@@ -23,7 +23,7 @@ public static class ExpressionEvaluator
         );
 
     private static readonly ConcurrentDictionary<string, Script<bool>> _conditionCache = new();
-    private static readonly ConcurrentDictionary<string, Script<string>> _assigneToCache = new();
+    private static readonly ConcurrentDictionary<string, Script<string>> _statementCache = new();
     public static async Task<bool> EvaluateConditionAsync(string expression, WorkflowContext context)
     {
         if (string.IsNullOrWhiteSpace(expression))
@@ -53,17 +53,17 @@ public static class ExpressionEvaluator
         }
     }
 
-    public static async Task<string?> EvaluateAutoAssigneAsync(string expression, WorkflowContext context)
+    public static async Task<string?> EvaluateStatementAsync(string expression, WorkflowContext context)
     {
         if (string.IsNullOrWhiteSpace(expression))
             return null;
 
         try
         {
-            if (!_assigneToCache.TryGetValue(expression, out var script))
+            if (!_statementCache.TryGetValue(expression, out var script))
             {
                 script = CSharpScript.Create<string>(expression, globalsType: typeof(WorkflowContext), options: _options);
-                _assigneToCache[expression] = script;
+                _statementCache[expression] = script;
             }
 
             var state = await script.RunAsync(context);
@@ -73,11 +73,11 @@ public static class ExpressionEvaluator
         catch (CompilationErrorException ex)
         {
             var errors = string.Join("\n", ex.Diagnostics.Select(d => d.ToString()));
-            throw new InvalidOperationException($"Compile error in {nameof(EvaluateAutoAssigneAsync)}:\n{expression}\n\n{errors}", ex);
+            throw new InvalidOperationException($"Compile error in {nameof(EvaluateStatementAsync)}:\n{expression}\n\n{errors}", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Execution error in {nameof(EvaluateAutoAssigneAsync)}:\n{expression}", ex);
+            throw new InvalidOperationException($"Execution error in {nameof(EvaluateStatementAsync)}:\n{expression}", ex);
         }
     }
 }

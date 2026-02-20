@@ -1,6 +1,6 @@
-﻿
-using RuleEngine.Base;
+﻿using RuleEngine.Base;
 using WorkflowBase;
+using WrokflowDefinition.HealthInsuranceIssue.Activity;
 using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 using WrokflowDefinition.HealthInsuranceIssue.RuleDefinitions;
 
@@ -20,16 +20,23 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
             StartState = "AutoMedicalCheck",
             States = new Dictionary<string, StateDefinition>
             {
+                ["Start"] = new StateDefinition
+                {
+                    Type = StateType.Start,
+                    Transitions =
+                    {
+                        new TransitionDefinition { To = "AutoMedicalCheck"},
+                    }
+                },
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
-                    Name = "AutoMedicalCheck",
+                    Title = "بررسی سیستمی شرایط پزشکی نفرات بیمه شده",
                     RulesetId = rulsetId,
                     Type = StateType.Automatic,
                     Activities =
                     {
                         //call api for policy
                         new EvaluateMedicalRiskActivity()
-
                     },
                     Transitions = {
                         new TransitionDefinition {
@@ -41,24 +48,21 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                             To = "Rejected" ,
                            // Condition=(p)=> p.GetData<string>("RiskLevel")=="high",
                             ConditionExpression="GetData<string>(\"RiskLevel\") == \"high\"",
-
                         },
                           new TransitionDefinition {
                             To = "Approved",
 
                          ConditionExpression="GetData<string>(\"RiskLevel\") == \"low\"",
-
                     }
                 }
                 },
                 ["WaitingForDoctor"] = new StateDefinition
                 {
-                    Name = "WaitingForDoctor",
+                    Title = "بررسی توسط پزشک",
                     Type = StateType.HumanTask,
                     Activities =
                     {
                         new DoctorReviewActivity()
-
                     },
                     HumanTask = new HumanTaskDefinition
                     {
@@ -67,18 +71,17 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "ExtraRate", Type = InputType.Number }
                         }
-                    
                     },
                     Transitions =
                     {
                         new TransitionDefinition { Event = "APPROVE", To = "Approved" },
-                        new TransitionDefinition { Event = "REQUEST_LAB", To = "WaitingForLab" },
+                        new TransitionDefinition { Event = "REQUEST_CompletingMedicalDocuments", To = "CompletingMedicalDocuments" },
                         new TransitionDefinition { Event = "REJECT", To = "Rejected" }
                     }
                 },
-                ["WaitingForLab"] = new StateDefinition
+                ["CompletingMedicalDocuments"] = new StateDefinition
                 {
-                    Name = "WaitingForLab",
+                    Title = "تکمیل مدارک پزشکی توسط بیمه گذار",
                     Type = StateType.HumanTask,
 
                     HumanTask = new HumanTaskDefinition
@@ -88,18 +91,19 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "DocUrl", Type = InputType.Text }
                         },
-                        AutoAssigne = (p) => {
+                        AutoAssigne = (p) =>
+                        {
                             return p.GetData<HealthPolicyRequest>("PolicyRequest").PolicyHodler.ToString();
-                            }
+                        }
                     },
                     Transitions =
                     {
-                        new TransitionDefinition { Event = "LAB_UPLOADED", To = "WaitingForDoctor" }
+                        new TransitionDefinition { Event = "MedicalDocuments_UPLOADED", To = "WaitingForDoctor" }
                     }
                 },
                 ["Approved"] = new StateDefinition
                 {
-                    Name = "Approved",
+                    Title = "تایید شده",
                     Type = StateType.End,
                     Activities =
                     {
@@ -110,7 +114,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 },
                 ["Rejected"] = new StateDefinition
                 {
-                    Name = "Rejected",
+                    Title = "ردشده",
                     Type = StateType.End,
 
                     Activities =
@@ -123,7 +127,6 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
             }
         };
     }
-
 
     private void RegisterRuleSet(string rulesetId)
     {
@@ -142,13 +145,12 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     .WithParam("maxAge",79)
                 },
 
-
                 new()
                 {
                     Rule = new UnderlyingDiseaseRule()
                 }
                 //,
-                
+
                 //// قانون سابقه بیماری
                 //new()
                 //{
@@ -163,5 +165,4 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 
         RuleSetRegistry.RegisterRuleSet(ruleSet);
     }
-
 }

@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowEngine.ConsoleApp",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowHost", "API\WorkflowHost.csproj", "{BD4547C4-1B86-4FE4-BAD9-C896223FF1CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WrokflowDefinition.HealthInsuranceIssue", "WrokflowDefinition.HealthInsuranceIssue\WrokflowDefinition.HealthInsuranceIssue.csproj", "{03D83809-F7DB-49F8-ADC6-4DA31951484F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WrokflowDefinition.HealthInsuranceIssue", "WrokflowDefinition.HealthInsuranceIssue\WrokflowDefinition.HealthInsuranceIssue.csproj", "{03D83809-F7DB-49F8-ADC6-4DA31951484F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
