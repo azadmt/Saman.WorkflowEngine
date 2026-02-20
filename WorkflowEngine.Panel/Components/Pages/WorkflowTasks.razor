@@ -1,0 +1,50 @@
+﻿@page "/tasks"
+@using WorkflowBase
+@inject HttpClient Http
+
+<h3>وظایف من</h3>
+
+@if (tasks == null)
+{
+    <p>در حال بارگذاری...</p>
+}
+else if (!tasks.Any())
+{
+    <p>در حال حاضر وظیفه‌ای ندارید.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>نام فرآیند</th>
+                <th>وضعیت</th>
+                <th>تاریخ ایجاد</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in tasks)
+            {
+                <tr>
+                    <td>@t.WorkflowInstanceId</td> <!-- یا نام واقعی -->
+                    <td>@t.Status</td>
+                    <td>@t.CreatedOn</td>
+                    <td><a href="/task/@t.Id">باز کردن</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<WorkflowTask> tasks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // فرض کنیم user و role از authentication می‌آید
+        tasks = await Http.GetFromJsonAsync<List<WorkflowTask>>("api/tasks?userName=ali&role=Customer");
+
+        
+    }
+}

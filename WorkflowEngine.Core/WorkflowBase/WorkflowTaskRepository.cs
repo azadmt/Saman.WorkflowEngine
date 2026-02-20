@@ -46,7 +46,7 @@ public class WorkflowTaskService
                .Single()
                ;
         task.Status = WorkflowTaskStatus.Completed;
-        task.CompleteTime = DateTime.Now;
+        task.CompletedOn = DateTime.Now;
         _db
           .GetCollection<WorkflowTask>()
           .Update(task);

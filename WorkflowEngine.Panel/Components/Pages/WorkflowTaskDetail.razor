@@ -1,0 +1,83 @@
+﻿@page "/task/{TaskId:guid}"
+@using WorkflowBase
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+@if (task == null)
+{
+    <p>در حال بارگذاری وظیفه...</p>
+}
+else
+{
+    <h3>بررسی پزشکی بیمه‌نامه - وظیفه #@task.Id</h3>
+
+    <!-- اطلاعات زمینه‌ای بیمه‌نامه -->
+    <div class="card mb-4">
+        <div class="card-header">جزئیات بیمه‌نامه</div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">نام بیمه‌گذار</dt>
+                <dd class="col-sm-9">@(contextData?["PolicyHolderName"] ?? "نامشخص")</dd>
+
+                <dt class="col-sm-3">شماره بیمه‌نامه</dt>
+                <dd class="col-sm-9">@(contextData?["PolicyNumber"] ?? "نامشخص")</dd>
+
+                <dt class="col-sm-3">سطح ریسک ارزیابی‌شده</dt>
+                <dd class="col-sm-9">
+                    <span class="badge @(riskLevel == "high" ? "bg-danger" : riskLevel == "medium" ? "bg-warning" : "bg-success")">
+                        @riskLevel
+                    </span>
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- فرم dynamic برای ورودی‌های وظیفه -->
+    <EditForm Model="formModel" OnValidSubmit="CompleteTask">
+        <DynamicForm Inputs="task.Inputs" @bind-FormModel="formModel" />
+
+        <button type="submit" class="btn btn-primary mt-3">ثبت بررسی و ادامه فرآیند</button>
+        <button type="button" class="btn btn-warning mt-3 ms-2" @onclick="RequestMoreDocuments">درخواست مدارک بیشتر</button>
+    </EditForm>
+
+    <!-- بخش کامنت‌ها / تاریخچه -->
+    <CommentsSection TaskId="task.Id" Comments="task.Comments" OnCommentAdded="RefreshComments" />
+}
+
+@code {
+    [Parameter] public Guid TaskId { get; set; }
+
+    private WorkflowTask? task;
+    private Dictionary<string, object?>? contextData;
+    private string? riskLevel;
+    private Dictionary<string, object?> formModel = new();
+
+   
+
+    protected override async Task OnInitializedAsync()
+    {
+        task = await Http.GetFromJsonAsync<WorkflowTask>($"api/tasks/{TaskId}");
+        if (task != null)
+        {
+            // فرض کنیم API جزئیات context رو هم برگردونه یا جداگانه لود کن
+            var instance = await Http.GetFromJsonAsync<WorkflowInstance>($"api/instances/{task.WorkflowInstanceId}");
+            contextData = instance?.Context.Data;
+            riskLevel = contextData?["RiskLevel"]?.ToString();
+        }
+        
+    }
+
+    private async Task CompleteTask()
+    {
+        await Http.PostAsJsonAsync($"api/tasks/{TaskId}/complete", formModel);
+        Navigation.NavigateTo("/tasks");
+    }
+
+    private async Task RequestMoreDocuments()
+    {
+        // ارسال event "REQUEST_MORE_INFO" به workflow
+        var data = new Dictionary<string, object> { { "Comment", "لطفاً آزمایش خون و عکس رادیولوژی ارسال شود" } };
+        await Http.PostAsJsonAsync($"api/tasks/{TaskId}/resume?event=REQUEST_MORE_INFO", data);
+        // یا فقط کامنت اضافه کن و منتظر بمون
+    }
+}
