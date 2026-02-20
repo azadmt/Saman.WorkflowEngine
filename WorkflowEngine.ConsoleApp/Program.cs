@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using WorkflowBase;
 using WorkflowEngine.Core.Common;
+using WrokflowDefinition.HealthInsuranceIssue;
 using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
 namespace WorkflowEngine.ConsoleApp;
@@ -92,7 +93,7 @@ class Program
     private static IEnumerable<WorkflowDefinition> GetAllWorkflowDefinitions()
     {
         var workflowDefiniotionType = typeof(IWorkflowDefinitionFactory);
-        var workflowDefinitions = Assembly.GetExecutingAssembly()
+        var workflowDefinitions = typeof(HealthInsuranceWorkflow).Assembly
     .GetTypes()
     .Where(type => workflowDefiniotionType.IsAssignableFrom(type) && !type.IsInterface);
 

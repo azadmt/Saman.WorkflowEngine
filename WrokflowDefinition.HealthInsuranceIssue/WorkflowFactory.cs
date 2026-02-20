@@ -34,17 +34,22 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     Transitions = {
                         new TransitionDefinition {
                             To = "WaitingForDoctor",
-                         Condition=(p)=> p.GetData<string>("RiskLevel")=="medium"},
+                        // Condition=(p)=> p.GetData<string>("RiskLevel")=="medium"},
+                         ConditionExpression="GetData<string>(\"RiskLevel\") == \"medium\"",
+                        },
                         new TransitionDefinition {
                             To = "Rejected" ,
-                            Condition=(p)=> p.GetData<string>("RiskLevel")=="high",
+                           // Condition=(p)=> p.GetData<string>("RiskLevel")=="high",
+                            ConditionExpression="GetData<string>(\"RiskLevel\") == \"high\"",
 
                         },
                           new TransitionDefinition {
                             To = "Approved",
-                         Condition=(p)=> p.GetData<string>("RiskLevel")=="low"}
+
+                         ConditionExpression="GetData<string>(\"RiskLevel\") == \"low\"",
 
                     }
+                }
                 },
                 ["WaitingForDoctor"] = new StateDefinition
                 {
@@ -61,7 +66,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         UiContract = "DoctorMedicalReview",
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "ExtraRate", Type = InputType.Number }
-                        },
+                        }
                     
                     },
                     Transitions =

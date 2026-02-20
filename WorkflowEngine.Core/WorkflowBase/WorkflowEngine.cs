@@ -1,4 +1,6 @@
-﻿namespace WorkflowBase;
+﻿using WorkflowEngine.Core.Common;
+
+namespace WorkflowBase;
 public class WorkflowEngine
 {
     private Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
@@ -71,8 +73,54 @@ public class WorkflowEngine
                 activity.ExecuteAsync(instance.Context);
             }
 
-            var transition = currentState.Transitions.Where(x => x.Condition(instance.Context)).Single();
+            //var transition = currentState.Transitions.Where(x => x.Condition(instance.Context)).Single();
+            //instance.CurrentStateName = transition.To;
+
+            TransitionDefinition transition = null;
+
+            foreach (var t in currentState.Transitions)
+            {
+                bool conditionMet = false;
+
+                if (t.ConditionFunc != null)
+                {
+
+                    conditionMet = t.ConditionFunc(instance.Context);
+                }
+                else if (!string.IsNullOrEmpty(t.ConditionExpression))
+                {
+                    try
+                    {
+                        conditionMet =  ExpressionEvaluator
+                            .EvaluateConditionAsync(t.ConditionExpression, instance.Context)
+                            .GetAwaiter()
+                            .GetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        // لاگ و ادامه یا throw
+                        continue;
+                    }
+                }
+                else
+                {
+                    
+                    conditionMet = true;
+                }
+
+                if (conditionMet)
+                {
+                    transition = t;
+                    break;  // اولین درست
+                }
+            }
+            if (transition == null)
+            {
+                throw new InvalidOperationException("هیچ transition شرطی برقرار نیست");
+            }
+
             instance.CurrentStateName = transition.To;
+
             Execute(instance);
 
         }

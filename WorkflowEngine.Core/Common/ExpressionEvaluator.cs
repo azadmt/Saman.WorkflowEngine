@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Scripting;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using WorkflowBase;
 
@@ -21,6 +22,8 @@ public static class ExpressionEvaluator
             "WorkflowBase"                               // namespace خود WorkflowContext
         );
 
+    private static readonly ConcurrentDictionary<string, Script<bool>> _conditionCache = new();
+    private static readonly ConcurrentDictionary<string, Script<string>> _assigneToCache = new();
     public static async Task<bool> EvaluateConditionAsync(string expression, WorkflowContext context)
     {
         if (string.IsNullOrWhiteSpace(expression))
@@ -28,14 +31,15 @@ public static class ExpressionEvaluator
 
         try
         {
-            var script = CSharpScript.Create<bool>(
-                expression,
-                globalsType: typeof(WorkflowContext),
-                options: _options
-            );
+            if (!_conditionCache.TryGetValue(expression, out var script))
+            {
+                script = CSharpScript.Create<bool>(expression, globalsType: typeof(WorkflowContext), options: _options);
+                _conditionCache[expression] = script;
+            }
 
             var state = await script.RunAsync(context);
             return state.ReturnValue;
+            
         }
         catch (CompilationErrorException ex)
         {
@@ -56,14 +60,15 @@ public static class ExpressionEvaluator
 
         try
         {
-            var script = CSharpScript.Create<string?>(
-                expression,
-                globalsType: typeof(WorkflowContext),
-                options: _options
-            );
+            if (!_assigneToCache.TryGetValue(expression, out var script))
+            {
+                script = CSharpScript.Create<string>(expression, globalsType: typeof(WorkflowContext), options: _options);
+                _assigneToCache[expression] = script;
+            }
 
             var state = await script.RunAsync(context);
             return state.ReturnValue;
+        
         }
         catch (CompilationErrorException ex)
         {
