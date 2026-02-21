@@ -1,5 +1,6 @@
 using LiteDB;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Text.Json.Serialization;
 
 namespace WorkflowBase;
 public class HumanTaskDefinition
@@ -21,5 +22,6 @@ public class DisplayField
     public string? Format { get; set; }
     public string? CssClass { get; set; }
     [BsonIgnore]
+    [JsonIgnore]
     public Func<WorkflowContext, object>? ValueProvider { get; init; }
 }

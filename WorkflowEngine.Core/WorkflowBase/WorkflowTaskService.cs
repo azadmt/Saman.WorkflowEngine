@@ -21,7 +21,10 @@ public class WorkflowTaskService
         
         return _db
                .GetCollection<WorkflowTask>()
-               .Find(x => x.Status == WorkflowTaskStatus.Open && (x.Role == role || x.Assignee == userName))
+               
+               .Query()               
+               .Where(x => x.Status == WorkflowTaskStatus.Open && (x.Role == role || x.Assignee == userName))
+               .Select(x=> new WorkflowTask { Id=x.Id,})
                .ToList();
     }
 
