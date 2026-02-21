@@ -23,8 +23,8 @@ namespace WrokflowDefinition.HealthInsuranceIssue.DataContract
             for (int i = 1; i < 5; i++)
             {
                 model.MedicalQuestions.Add(new MedicalQuestions { Code = i });
-                model.Covers.Add(new Cover());
-                model.Insureds.Add(new Insured() {BirthDate= DateTime.Now.AddYears(-30) });
+                model.Covers.Add(new Cover() { Id =  new Random(2).Next(1000, 1999),Name=$"Cover -{i}" });
+                model.Insureds.Add(new Insured() { Name=$"Insured {i}", BirthDate = DateTime.Now.AddYears(-30) });
             }
             if (withInvlidAgeCount > 0)
             {
@@ -53,14 +53,17 @@ namespace WrokflowDefinition.HealthInsuranceIssue.DataContract
 
     public class Insured
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();     
+        public string Name { get; set; }
         public bool HasUnderlyingDisease { get; set; }
         public DateTime BirthDate { get; set; }
     }
 
     public class Cover
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Id { get; set; }
+        public string Name { get; set; }
+
     }
 
     public class MedicalQuestions

@@ -1,3 +1,6 @@
+using LiteDB;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 namespace WorkflowBase;
 public class HumanTaskDefinition
 {
@@ -5,6 +8,18 @@ public class HumanTaskDefinition
     public string User { get; set; } = default!;
     public string Role { get; set; } = default!;
     public string UiContract { get; set; } = default!;
-    public List<TaskInput> Inputs{ get; set; } = new();
+    public List<TaskInput> Inputs { get; set; } = new();
+    public List<DisplayField> ContextDisplayFields { get; set; } = new();
+    public string? ContextHtmlTemplate { get; set; }
 }
 
+public class DisplayField
+{
+    public string Label { get; set; }
+    public object Value { get; set; }
+    public int Order { get; set; }
+    public string? Format { get; set; }
+    public string? CssClass { get; set; }
+    [BsonIgnore]
+    public Func<WorkflowContext, object>? ValueProvider { get; init; }
+}

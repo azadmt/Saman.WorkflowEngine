@@ -9,5 +9,6 @@ public enum InputType
     CheckBox,
     Radio,
     Dropdown,
+    MultiSelect,
     FileUpload
 }

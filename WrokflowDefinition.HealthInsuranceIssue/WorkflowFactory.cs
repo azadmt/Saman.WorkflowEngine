@@ -1,4 +1,5 @@
-﻿using RuleEngine.Base;
+﻿using Newtonsoft.Json.Serialization;
+using RuleEngine.Base;
 using WorkflowBase;
 using WrokflowDefinition.HealthInsuranceIssue.Activity;
 using WrokflowDefinition.HealthInsuranceIssue.DataContract;
@@ -68,15 +69,85 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     {
                         Role = "Doctor",
                         UiContract = "DoctorMedicalReview",
-                        Inputs = new List<TaskInput>() {
-                            new TaskInput { Name = "ExtraRate", Type = InputType.Number }
+                        Inputs = new List<TaskInput>
+                         {
+                        new() { Name = "ExtraRate", Lable = "نرخ اضافی پیشنهادی (%)", Type = InputType.Number },
+                        new() { Name = "MedicalNotes", Lable = "یادداشت‌های پزشکی", Type = InputType.Text },
+                        new() { Name = "RemovedCovers",
+                            Lable = "پوشش ها",
+                            Type = InputType.MultiSelect,
+                            OptionsDataProvider= ctx =>
+                                    {
+                                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                                        return req?
+                                        .Covers?
+                                        .Select(x=> new KeyValuePair<string,string>(x.Id.ToString(),x.Name))
+                                        .ToList();
+                                    }
+
+                        },
+                        new() {
+                            Name = "ApprovalStatus",
+                            Lable = "وضعیت تأیید",
+                            Type = InputType.Dropdown,
+                            Options = new() { new("Approved", "تأیید"), new("Rejected", "رد") }
+                               }
+                          },
+                        ContextDisplayFields = new List<DisplayField> {
+                            new()
+                                {
+                                    Label = "نام بیمه‌گذار",
+                                    Order = 1,
+                                    ValueProvider = ctx =>
+                                    {
+                                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                                        return req?.Insureds
+                                        .First(x=> x.Id==req.PolicyHodler)
+                                        .Name ?? "نامشخص";
+                                    }
+                                },
+                            new()
+                                {
+                                    Label = "مبلغ بیمه نامه",
+                                    Order = 2,
+                                    ValueProvider = ctx =>
+                                    {
+                                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                                        return req?.Ammount;
+                                    }
+                                },
+                            new()
+                                {
+                                    Label = "پوشش ها",
+                                    Order = 3,
+                                    ValueProvider = ctx =>
+                                    {
+                                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                                        return req?.Covers;
+                                    }
+                                },                            
+                            new()
+                                {
+                                    Label = "بیمه شدگان",
+                                    Order = 3,
+                                    ValueProvider = ctx =>
+                                    {
+                                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                                        return req?.Insureds;
+                                    }
+                                }
+
+
                         }
                     },
                     Transitions =
                     {
-                        new TransitionDefinition { Event = "APPROVE", To = "Approved" },
-                        new TransitionDefinition { Event = "REQUEST_CompletingMedicalDocuments", To = "CompletingMedicalDocuments" },
-                        new TransitionDefinition { Event = "REJECT", To = "Rejected" }
+                        new  () { Event = "APPROVE", To = "Approved",Title="تایید" },
+                        new  (){
+                            Event = "REQUEST_CompletingMedicalDocuments",
+                            To = "CompletingMedicalDocuments",
+                            Title="تکمیل مدارک" },
+                        new  (){ Event = "REJECT", To = "Rejected",Title="رد" }
                     }
                 },
                 ["CompletingMedicalDocuments"] = new StateDefinition
@@ -89,7 +160,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Role = "Customer",
                         UiContract = "UploadLabResult",
                         Inputs = new List<TaskInput>() {
-                            new TaskInput { Name = "DocUrl", Type = InputType.Text }
+                            new TaskInput { Name = "DocUrl", Type = InputType.FileUpload }
                         },
                         AutoAssigne = (p) =>
                         {
@@ -98,7 +169,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     },
                     Transitions =
                     {
-                        new TransitionDefinition { Event = "MedicalDocuments_UPLOADED", To = "WaitingForDoctor" }
+                        new TransitionDefinition { Event = "MedicalDocuments_UPLOADED", To = "WaitingForDoctor",Title = "ارسال" }
                     }
                 },
                 ["Approved"] = new StateDefinition

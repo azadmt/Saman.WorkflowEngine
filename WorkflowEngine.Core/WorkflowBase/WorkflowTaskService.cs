@@ -18,6 +18,7 @@ public class WorkflowTaskService
 
     public List<WorkflowTask> GetAvailableTasks(string role, string userName)
     {
+        
         return _db
                .GetCollection<WorkflowTask>()
                .Find(x => x.Status == WorkflowTaskStatus.Open && (x.Role == role || x.Assignee == userName))
@@ -54,8 +55,3 @@ public class WorkflowTaskService
 }
 
 
-public interface IDbContext
-{
-    T Set<T>();
-   
-}

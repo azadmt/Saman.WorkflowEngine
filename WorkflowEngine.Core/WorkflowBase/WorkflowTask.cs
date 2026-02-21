@@ -8,11 +8,6 @@ public class WorkflowTask
     public string Assignee { get; set; }
     public DateTimeOffset CompletedOn{ get; set; }
     public DateTimeOffset CreatedOn{ get; set; }
-    public List<TaskInput> Inputs { get; set; } = new();
-}
-
-public enum WorkflowTaskStatus
-{
-    Open,
-    Completed
+    public List<TaskInput> Inputs { get; set; } = new();  
+    public List<DisplayField> ContextDisplayFields { get; set; } = new();
 }

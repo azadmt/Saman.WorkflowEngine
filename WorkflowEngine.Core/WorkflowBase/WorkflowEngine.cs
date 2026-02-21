@@ -127,15 +127,7 @@ public class WorkflowEngine
         else if (currentState.Type == StateType.HumanTask)
         {
             instance.Status = WorkflowInstanceStatus.Waiting;
-            _workflowTaskRepository.Add(new WorkflowTask
-            {
-                Role = currentState.HumanTask.Role,
-                WorkflowInstanceId = instance.Id,
-                Inputs = currentState.HumanTask.Inputs,
-                Assignee = currentState.HumanTask.AutoAssigne != null
-                ? currentState?.HumanTask.AutoAssigne.Invoke(instance.Context)
-                : null
-            }); ;
+            _workflowTaskRepository.Add(GetWorkflowTask(instance)); 
 
         }
         else if (currentState.Type == StateType.End)
@@ -160,5 +152,29 @@ public class WorkflowEngine
         instance.Context.CurrentStateDefinition = _workflowRegistry[instance.WorkflowDefinitionId]
             .States[instance.CurrentStateName]
             ;
+    }
+
+
+    private static WorkflowTask GetWorkflowTask(WorkflowInstance workflowInstance)
+    {
+        var stateDefinition = workflowInstance.Context.CurrentStateDefinition;
+        var taskAssignee = stateDefinition.HumanTask.AutoAssigne != null
+                ? stateDefinition?.HumanTask.AutoAssigne.Invoke(workflowInstance.Context)
+                : null;
+
+        stateDefinition
+            .HumanTask
+            .ContextDisplayFields
+            .ForEach(x=> { x.Value = x.ValueProvider.Invoke(workflowInstance.Context); });
+        return new WorkflowTask
+        {
+            Role = stateDefinition.HumanTask.Role,
+            WorkflowInstanceId = workflowInstance.Id,
+            Inputs = stateDefinition.HumanTask.Inputs,
+            Assignee = taskAssignee,
+            ContextDisplayFields= stateDefinition
+            .HumanTask
+            .ContextDisplayFields
+        };
     }
 }
