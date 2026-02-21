@@ -18,9 +18,25 @@ public class TaskController : ControllerBase
 
 
     [HttpGet]
-    public List<WorkflowTask> Get([FromQuery] string role)
-    => _taskService.GetAvailableTasks(role, "");
+    public ActionResult<List<WorkflowTask>> Get([FromQuery] string role)
+    {
+        var tasks = _taskService.GetAvailableTasks(role, "");
+        return Ok(tasks);
+    }
 
+    [HttpGet("{id}")]
+    public ActionResult<WorkflowTask> Get(Guid id)
+    {
+        var task = _taskService.TaskDetail(id);
+        return Ok(task);
+    }
+
+    [HttpPost("{id}/complete")]
+    public ActionResult<WorkflowTask> Complete(Guid id, Dictionary<string,object> formInput)
+    {
+        //var task = _engine.Resume(id);
+        return Ok();
+    }
 
     [HttpPost("{id}/Take")]
     public IActionResult Take(Guid id)

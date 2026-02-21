@@ -1,4 +1,4 @@
-﻿@using WorkflowBase
+﻿@* @using WorkflowBase
 @inject HttpClient Http
 @inject NavigationManager Nav
 
@@ -14,7 +14,7 @@
             @switch (input.Type)
             {
                 case InputType.Text:
-                    <InputText @bind-Value="FormModel[input.Name]" class="form-control" />
+                    <InputText @bind-Value="FormModel[input.Name]?.ToString()" class="form-control" />
                     break;
 
                 case InputType.Number:
@@ -95,4 +95,4 @@
     {
         // یک modal باز کن و کامنت بگیر، بعد Post به /comment
     }
-}
+} *@

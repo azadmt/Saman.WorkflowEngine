@@ -16,6 +16,8 @@ public class WorkflowTaskService
         _db.GetCollection<WorkflowTask>().Insert(workflowTaskEntity);
     }
 
+
+
     public List<WorkflowTask> GetAvailableTasks(string role, string userName)
     {
         
@@ -40,6 +42,16 @@ public class WorkflowTaskService
             throw new UnauthorizedAccessException($"{userName} can't do this task");
 
         task.Assignee = userName;
+    }
+
+    public WorkflowTask TaskDetail(Guid taskId)
+    {
+        return _db
+               .GetCollection<WorkflowTask>()
+               .Find(x => x.Id == taskId)
+               .Single()
+               ;
+    
     }
 
     public void CompleteTask(Guid taskId)

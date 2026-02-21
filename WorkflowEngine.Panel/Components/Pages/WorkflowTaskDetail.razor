@@ -2,82 +2,178 @@
 @using WorkflowBase
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
 
-@if (task == null)
+@if (task is null)
 {
-    <p>در حال بارگذاری وظیفه...</p>
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">در حال بارگذاری وظیفه...</p>
+    </div>
 }
 else
 {
-    <h3>بررسی پزشکی بیمه‌نامه - وظیفه #@task.Id</h3>
+    <h3 class="mb-4">وظیفه #@task.Id</h3>
 
-    <!-- اطلاعات زمینه‌ای بیمه‌نامه -->
-    <div class="card mb-4">
-        <div class="card-header">جزئیات بیمه‌نامه</div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">نام بیمه‌گذار</dt>
-                <dd class="col-sm-9">@(contextData?["PolicyHolderName"] ?? "نامشخص")</dd>
-
-                <dt class="col-sm-3">شماره بیمه‌نامه</dt>
-                <dd class="col-sm-9">@(contextData?["PolicyNumber"] ?? "نامشخص")</dd>
-
-                <dt class="col-sm-3">سطح ریسک ارزیابی‌شده</dt>
-                <dd class="col-sm-9">
-                    <span class="badge @(riskLevel == "high" ? "bg-danger" : riskLevel == "medium" ? "bg-warning" : "bg-success")">
-                        @riskLevel
-                    </span>
-                </dd>
-            </dl>
+    <!-- بخش نمایش اطلاعات زمینه‌ای (همون قبلی، بدون تغییر) -->
+    @if (task.ContextDisplayFields.Any())
+    {
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0">اطلاعات کلیدی درخواست</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row g-3">
+                    @foreach (var field in task.ContextDisplayFields.OrderBy(x => x.Order))
+                    {
+                        var valueStr = field.Value?.ToString() ?? "—";
+                        if (string.IsNullOrWhiteSpace(valueStr)) continue;
+                        <dt class="col-sm-4 text-muted fw-medium">@field.Label</dt>
+                        <dd class="col-sm-7 @(field.CssClass ?? "")">@valueStr</dd>
+                    }
+                </dl>
+            </div>
         </div>
-    </div>
+    }
 
-    <!-- فرم dynamic برای ورودی‌های وظیفه -->
-    <EditForm Model="formModel" OnValidSubmit="CompleteTask">
-        <DynamicForm Inputs="task.Inputs" @bind-FormModel="formModel" />
+    <!-- بخش فرم ورودی‌ها - با HTML خام و JS interop -->
+    @if (task.Inputs.Any())
+    {
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">تکمیل وظیفه</h5>
+            </div>
+            <div class="card-body">
+                <form id="taskForm">
+                    @foreach (var input in task.Inputs)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">
+                                @input.Lable
+                                @if (input.IsRequired)
+                                {
+                                    <span class="text-danger">*</span>
+                                }
+                            </label>
 
-        <button type="submit" class="btn btn-primary mt-3">ثبت بررسی و ادامه فرآیند</button>
-        <button type="button" class="btn btn-warning mt-3 ms-2" @onclick="RequestMoreDocuments">درخواست مدارک بیشتر</button>
-    </EditForm>
+                            @switch (input.Type)
+                            {
+                                case InputType.Text:
+                                    <input type="text"
+                                           id="@($"input-{input.Name}")"
+                                           class="form-control"
+                                           value="@(formData.GetValueOrDefault(input.Name, ""))" />
+                                    break;
 
-    <!-- بخش کامنت‌ها / تاریخچه -->
-    <CommentsSection TaskId="task.Id" Comments="task.Comments" OnCommentAdded="RefreshComments" />
+                                case InputType.Number:
+                                    <input type="number"
+                                           id="@($"input-{input.Name}")"
+                                           class="form-control"
+                                           value="@(formData.GetValueOrDefault(input.Name, "0"))" />
+                                    break;
+
+                                case InputType.Dropdown:
+                                    <select id="@($"input-{input.Name}")" class="form-select">
+                                        <option value="">انتخاب کنید</option>
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case InputType.MultiSelect:
+                                    <select multiple id="@($"input-{input.Name}")" class="form-select" size="5">
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case InputType.FileUpload:
+                                    <input type="file"
+                                           id="@($"input-{input.Name}")"
+                                           class="form-control"
+                                           @onchange="@(async e => await HandleFileUpload(e, input.Name))" />
+                                    @if (formData.TryGetValue(input.Name, out var url) && !string.IsNullOrEmpty(url))
+                                    {
+                                        <small class="text-success mt-1 d-block">
+                                            آپلود شد: <a href="@url" target="_blank">مشاهده</a>
+                                        </small>
+                                    }
+                                    break;
+
+                                default:
+                                    <div class="alert alert-warning py-2">
+                                        نوع ورودی پشتیبانی نمی‌شود: @input.Type
+                                    </div>
+                                    break;
+                            }
+                        </div>
+                    }
+
+                    <!-- دکمه‌های اکشن -->
+                    <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-success px-4 py-2" @onclick="SubmitTask">ارسال و تکمیل وظیفه</button>
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2" @onclick="CancelTask">انصراف</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
 }
+
 
 @code {
     [Parameter] public Guid TaskId { get; set; }
-
     private WorkflowTask? task;
-    private Dictionary<string, object?>? contextData;
-    private string? riskLevel;
-    private Dictionary<string, object?> formModel = new();
-
-   
+    private Dictionary<string, string> formData = new();
 
     protected override async Task OnInitializedAsync()
     {
         task = await Http.GetFromJsonAsync<WorkflowTask>($"api/tasks/{TaskId}");
         if (task != null)
         {
-            // فرض کنیم API جزئیات context رو هم برگردونه یا جداگانه لود کن
-            var instance = await Http.GetFromJsonAsync<WorkflowInstance>($"api/instances/{task.WorkflowInstanceId}");
-            contextData = instance?.Context.Data;
-            riskLevel = contextData?["RiskLevel"]?.ToString();
+            foreach (var input in task.Inputs)
+            {
+                formData[input.Name] = "";
+            }
         }
-        
     }
 
-    private async Task CompleteTask()
+    private async Task HandleFileUpload(ChangeEventArgs e, string fieldName)
     {
-        await Http.PostAsJsonAsync($"api/tasks/{TaskId}/complete", formModel);
+        // برای فایل آپلود، هنوز از Blazor InputFile استفاده می‌کنیم (یا JS کامل)
+        // اگر می‌خوای کامل JS باشه، بگو کد JS بنویسم
+    }
+
+    private async Task SubmitTask()
+    {
+        // جمع‌آوری تمام مقادیر از فرم با JS Interop
+        var formValues = await JsRuntime.InvokeAsync<Dictionary<string, string>>(
+            "getFormValues", "taskForm");
+
+        foreach (var kv in formValues)
+        {
+            formData[kv.Key] = kv.Value;
+        }
+
+        var payload = new { FormData = formData };
+        var response = await Http.PostAsJsonAsync($"api/tasks/{TaskId}/complete", payload);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/tasks");
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "خطا در ثبت وظیفه");
+        }
+    }
+
+    private void CancelTask()
+    {
         Navigation.NavigateTo("/tasks");
-    }
-
-    private async Task RequestMoreDocuments()
-    {
-        // ارسال event "REQUEST_MORE_INFO" به workflow
-        var data = new Dictionary<string, object> { { "Comment", "لطفاً آزمایش خون و عکس رادیولوژی ارسال شود" } };
-        await Http.PostAsJsonAsync($"api/tasks/{TaskId}/resume?event=REQUEST_MORE_INFO", data);
-        // یا فقط کامنت اضافه کن و منتظر بمون
     }
 }

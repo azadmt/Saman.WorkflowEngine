@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "API\\WorkflowHost.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "WorkflowEngine.Panel\\WorkflowEngine.Panel.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

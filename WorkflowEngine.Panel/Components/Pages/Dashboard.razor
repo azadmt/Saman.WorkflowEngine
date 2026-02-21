@@ -1,0 +1,69 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using WorkflowBase
+@* @attribute [Authorize] *@
+@inject HttpClient Http
+
+<PageTitle>پنل مدیریت وظایف</PageTitle>
+
+<h2 class="mb-4">خوش آمدید به پنل وظایف</h2>
+
+<div class="row g-4">
+    <!-- کارت خلاصه وظایف باز -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-white bg-primary shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">وظایف باز من</h5>
+                <div class="display-4 fw-bold">@(tasks?.Count ?? 0)</div>
+                <p class="card-text mt-2">وظیفه منتظر اقدام شما</p>
+                <a href="/taskList" class="btn btn-light mt-3">مشاهده همه</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- کارت وضعیت کلی -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card text-white bg-info shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">وضعیت فرآیندها</h5>
+                <ul class="list-unstyled mt-3">
+                    <li>در حال اجرا: @runningCount</li>
+                    <li>تکمیل شده امروز: @completedToday</li>
+                    <li>در انتظار تأیید: @pendingApproval</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- کارت سریع اقدام -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card bg-light shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">اقدام سریع</h5>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/taskList" class="btn btn-outline-primary">مشاهده وظایف</a>
+                    <button class="btn btn-outline-secondary">ایجاد فرآیند جدید</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<WorkflowTask>? tasks;
+    private int runningCount = 0;
+    private int completedToday = 0;
+    private int pendingApproval = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // لود تعداد وظایف باز
+        tasks = await Http.GetFromJsonAsync<List<WorkflowTask>>("api/tasks?role=Doctor");
+
+        // اگر آمار بیشتر می‌خوای، API جداگانه بساز
+        // فعلاً مقادیر نمونه
+        runningCount = tasks?.Count ?? 0;
+        completedToday = 3;
+        pendingApproval = 2;
+    }
+}
