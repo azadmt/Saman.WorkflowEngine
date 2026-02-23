@@ -9,6 +9,7 @@ public class HumanTaskDefinition
     public string User { get; set; } = default!;
     public string Role { get; set; } = default!;
     public string UiContract { get; set; } = default!;
+    public string Title { get; set; } = default!;
     public List<TaskInput> Inputs { get; set; } = new();
     public List<DisplayField> ContextDisplayFields { get; set; } = new();
     public string? ContextHtmlTemplate { get; set; }

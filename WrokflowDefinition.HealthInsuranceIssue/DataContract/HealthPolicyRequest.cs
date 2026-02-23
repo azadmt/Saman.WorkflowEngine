@@ -9,7 +9,10 @@ namespace WrokflowDefinition.HealthInsuranceIssue.DataContract
 {
     public class HealthPolicyRequest
     {
+        public Guid Id { get; set; }=Guid.NewGuid();
         public Guid PolicyHodler { get; set; }
+        public decimal ExtraRate { get; set; }
+        public string State { get; set; }
         public decimal Ammount { get; set; }
         public List<Insured> Insureds { get; set; } = new();
         public List<Cover> Covers { get; set; } = new();

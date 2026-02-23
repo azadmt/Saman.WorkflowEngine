@@ -166,9 +166,17 @@ public class WorkflowEngine
             .HumanTask
             .ContextDisplayFields
             .ForEach(x=> { x.Value = x.ValueProvider.Invoke(workflowInstance.Context); });
+
+        stateDefinition
+            .HumanTask
+            .Inputs
+            .Where(x => x.OptionsDataProvider != null)
+            .ToList()
+            .ForEach(x => x.Options= x.OptionsDataProvider.Invoke(workflowInstance.Context));
         return new WorkflowTask
         {
             Role = stateDefinition.HumanTask.Role,
+            Title=stateDefinition.Title,
             WorkflowInstanceId = workflowInstance.Id,
             Inputs = stateDefinition.HumanTask.Inputs,
             Assignee = taskAssignee,

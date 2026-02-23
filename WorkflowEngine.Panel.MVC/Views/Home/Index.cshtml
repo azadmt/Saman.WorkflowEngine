@@ -1,0 +1,56 @@
+﻿@using WorkflowBase
+@model List<WorkflowTask>
+
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold">وظایف من</h4>
+    <span class="text-muted small">@Model.Count وظیفه</span>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card-clean p-5 text-center bg-white">
+        <div class="text-muted">
+            در حال حاضر وظیفه فعالی برای شما ثبت نشده است.
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var t in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-clean p-4 h-100 bg-white">
+
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h6 class="fw-bold mb-0">
+                            @t.Title
+                        </h6>
+                        <span class="badge bg-light text-dark">
+                            @t.Status
+                        </span>
+                    </div>
+
+                    <div class="text-muted small mb-2">
+                        نقش: @t.Role
+                    </div>
+
+                    <div class="text-muted small mb-4">
+                        @t.CreatedOn.ToString("yyyy/MM/dd HH:mm")
+                    </div>
+
+                    <div class="mt-auto">
+                        <a href="/Tasks/Details/@t.Id"
+                           class="btn btn-primary w-100">
+                            مشاهده و اقدام
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+}

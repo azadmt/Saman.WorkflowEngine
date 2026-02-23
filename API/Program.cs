@@ -1,5 +1,4 @@
-using LiteDB;
-using Microsoft.EntityFrameworkCore;
+﻿using LiteDB;
 using WorkflowBase;
 using WrokflowDefinition.HealthInsuranceIssue;
 
@@ -18,12 +17,19 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-
+        builder.Services.AddHttpClient();
         //builder.Services.AddDbContext<WorkflowDbContext>(o =>
         //            o.UseSqlite("Data Source=workflow.db"));
-
-
-        builder.Services.AddHttpClient();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowLocalhost", policy =>
+            {
+                policy
+                      .WithOrigins("*") // آدرس فرانت
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
         //builder.Services.AddScoped<IWorkflowHook>(sp =>
         //new ConsoleEventHook());
 
@@ -31,7 +37,8 @@ public class Program
         builder.Services.AddSingleton<WorkflowBase.WorkflowEngine>();
         builder.Services.AddSingleton<IWorkflowRepository,LiteDbWorkflowRepository>();
         builder.Services.AddSingleton<WorkflowTaskService>();
-       var workflowDb= builder.Configuration.GetValue<string>("DbName");
+       // builder.Services.AddSingleton<IJsonElementCleaner, JsonElementCleaner>();
+        var workflowDb= builder.Configuration.GetValue<string>("DbName");
         builder.Services.AddSingleton<LiteDatabase>((sp)=> new LiteDatabase(workflowDb));
 
         

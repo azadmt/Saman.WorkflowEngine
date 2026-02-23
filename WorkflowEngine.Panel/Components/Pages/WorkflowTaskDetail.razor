@@ -15,7 +15,6 @@ else
 {
     <h3 class="mb-4">وظیفه #@task.Id</h3>
 
-    <!-- بخش نمایش اطلاعات زمینه‌ای (همون قبلی، بدون تغییر) -->
     @if (task.ContextDisplayFields.Any())
     {
         <div class="card shadow-sm mb-4 border-0">
@@ -36,7 +35,6 @@ else
         </div>
     }
 
-    <!-- بخش فرم ورودی‌ها - با HTML خام و JS interop -->
     @if (task.Inputs.Any())
     {
         <div class="card shadow-sm mb-4 border-0">
@@ -44,7 +42,7 @@ else
                 <h5 class="mb-0">تکمیل وظیفه</h5>
             </div>
             <div class="card-body">
-                <form id="taskForm">
+                <form id="taskForm" onsubmit="return false;">
                     @foreach (var input in task.Inputs)
                     {
                         <div class="mb-3">
@@ -61,19 +59,21 @@ else
                                 case InputType.Text:
                                     <input type="text"
                                            id="@($"input-{input.Name}")"
-                                           class="form-control"
-                                           value="@(formData.GetValueOrDefault(input.Name, ""))" />
+                                           name="@input.Name"
+                                           class="form-control" />
                                     break;
 
                                 case InputType.Number:
                                     <input type="number"
                                            id="@($"input-{input.Name}")"
-                                           class="form-control"
-                                           value="@(formData.GetValueOrDefault(input.Name, "0"))" />
+                                           name="@input.Name"
+                                           class="form-control" />
                                     break;
 
                                 case InputType.Dropdown:
-                                    <select id="@($"input-{input.Name}")" class="form-select">
+                                    <select id="@($"input-{input.Name}")"
+                                            name="@input.Name"
+                                            class="form-select">
                                         <option value="">انتخاب کنید</option>
                                         @foreach (var opt in input.Options)
                                         {
@@ -83,7 +83,11 @@ else
                                     break;
 
                                 case InputType.MultiSelect:
-                                    <select multiple id="@($"input-{input.Name}")" class="form-select" size="5">
+                                    <select multiple
+                                            id="@($"input-{input.Name}")"
+                                            name="@input.Name"
+                                            class="form-select"
+                                            size="5">
                                         @foreach (var opt in input.Options)
                                         {
                                             <option value="@opt.Key">@opt.Value</option>
@@ -94,14 +98,8 @@ else
                                 case InputType.FileUpload:
                                     <input type="file"
                                            id="@($"input-{input.Name}")"
-                                           class="form-control"
-                                           @onchange="@(async e => await HandleFileUpload(e, input.Name))" />
-                                    @if (formData.TryGetValue(input.Name, out var url) && !string.IsNullOrEmpty(url))
-                                    {
-                                        <small class="text-success mt-1 d-block">
-                                            آپلود شد: <a href="@url" target="_blank">مشاهده</a>
-                                        </small>
-                                    }
+                                           name="@input.Name"
+                                           class="form-control" />
                                     break;
 
                                 default:
@@ -113,17 +111,24 @@ else
                         </div>
                     }
 
-                    <!-- دکمه‌های اکشن -->
                     <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
-                        <button type="button" class="btn btn-success px-4 py-2" @onclick="SubmitTask">ارسال و تکمیل وظیفه</button>
-                        <button type="button" class="btn btn-outline-secondary px-4 py-2" @onclick="CancelTask">انصراف</button>
+                        <button type="button"
+                                class="btn btn-success px-4 py-2"
+                                onclick="window.submitTask('@TaskId')">
+                            ارسال و تکمیل وظیفه
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-outline-secondary px-4 py-2"
+                                onclick="window.location.href='/tasks'">
+                            انصراف
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     }
 }
-
 
 @code {
     [Parameter] public Guid TaskId { get; set; }
@@ -133,47 +138,67 @@ else
     protected override async Task OnInitializedAsync()
     {
         task = await Http.GetFromJsonAsync<WorkflowTask>($"api/tasks/{TaskId}");
-        if (task != null)
-        {
-            foreach (var input in task.Inputs)
-            {
-                formData[input.Name] = "";
-            }
-        }
-    }
-
-    private async Task HandleFileUpload(ChangeEventArgs e, string fieldName)
-    {
-        // برای فایل آپلود، هنوز از Blazor InputFile استفاده می‌کنیم (یا JS کامل)
-        // اگر می‌خوای کامل JS باشه، بگو کد JS بنویسم
-    }
-
-    private async Task SubmitTask()
-    {
-        // جمع‌آوری تمام مقادیر از فرم با JS Interop
-        var formValues = await JsRuntime.InvokeAsync<Dictionary<string, string>>(
-            "getFormValues", "taskForm");
-
-        foreach (var kv in formValues)
-        {
-            formData[kv.Key] = kv.Value;
-        }
-
-        var payload = new { FormData = formData };
-        var response = await Http.PostAsJsonAsync($"api/tasks/{TaskId}/complete", payload);
-
-        if (response.IsSuccessStatusCode)
-        {
-            Navigation.NavigateTo("/tasks");
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "خطا در ثبت وظیفه");
-        }
-    }
-
-    private void CancelTask()
-    {
-        Navigation.NavigateTo("/tasks");
     }
 }
+
+<!-- اسکریپت باید داخل همین کامپوننت یا در index.html/_Host.cshtml لود شود -->
+<script>
+    window.submitTask = async function (taskId) {
+
+        const form = document.getElementById("taskForm");
+        if (!form) {
+            alert("فرم پیدا نشد");
+            return;
+        }
+
+        const elements = form.querySelectorAll("input, select, textarea");
+        const formDataObj = {};
+
+        elements.forEach(el => {
+            if (!el.name) return;
+
+            // فایل (فعلاً فقط نام فایل)
+            if (el.type === "file") {
+                if (el.files.length > 0) {
+                    formDataObj[el.name] = el.files[0].name;
+                }
+                return;
+            }
+
+            // مولتی سلکت
+            if (el.multiple) {
+                const values = Array.from(el.selectedOptions).map(o => o.value);
+                formDataObj[el.name] = values;
+                return;
+            }
+
+            // مقدار عادی
+            formDataObj[el.name] = el.value ?? "";
+        });
+
+        const payload = {
+            formData: formDataObj
+        };
+
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/complete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                window.location.href = "/tasks";
+            } else {
+                const text = await response.text();
+                console.error(text);
+                alert("خطا در ثبت وظیفه");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("خطا در ارتباط با سرور");
+        }
+    };
+</script>

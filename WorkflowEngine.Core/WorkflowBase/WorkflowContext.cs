@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RuleEngine.Base;
+using System.Text.Json;
 namespace WorkflowBase;
 public class WorkflowContext: IWorkflowContex, IRuleContext//؟؟
 {
@@ -30,7 +31,10 @@ public class WorkflowContext: IWorkflowContex, IRuleContext//؟؟
             return jToken.ToObject<T>();
         }
 
-    
+        if (value is JsonElement element)
+            return element.Deserialize<T>();
+
+
         try
         {
             return (T)value;

@@ -7,7 +7,11 @@
         "Action": "Start"
       },
       {
-        "Path": "WorkflowEngine.Panel\\WorkflowEngine.Panel.csproj",
+        "Path": "HealthInsurance.Api\\HealthInsurance.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "WorkflowEngine.Panel.MVC\\WorkflowEngine.Panel.MVC.csproj",
         "Action": "Start"
       }
     ]

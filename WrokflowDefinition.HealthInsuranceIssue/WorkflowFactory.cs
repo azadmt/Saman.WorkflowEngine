@@ -31,7 +31,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 },
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
-                    Title = "بررسی سیستمی شرایط پزشکی نفرات بیمه شده",
+                    Title = "بررسی سیستمی شرایط بیمه نامه",
                     RulesetId = rulsetId,
                     Type = StateType.Automatic,
                     Activities =
@@ -69,6 +69,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     {
                         Role = "Doctor",
                         UiContract = "DoctorMedicalReview",
+                        Title = "بررسی بیمه نامه درمان",
                         Inputs = new List<TaskInput>
                          {
                         new() { Name = "ExtraRate", Lable = "نرخ اضافی پیشنهادی (%)", Type = InputType.Number },
