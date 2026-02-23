@@ -21,13 +21,18 @@ public class WorkflowTaskService
     public List<WorkflowTask> GetAvailableTasks(string role, string userName)
     {
         
-        return _db
-               .GetCollection<WorkflowTask>()
-               
+        var workflowTasks= _db
+               .GetCollection<WorkflowTask>()               
                .Query()               
-               .Where(x => x.Status == WorkflowTaskStatus.Open && (x.Role == role || x.Assignee == userName))
-               .Select(x=> new WorkflowTask { Id=x.Id,})
+               .Where(x => x.Status == WorkflowTaskStatus.Open && (x.Role == role || x.Assignee == userName))            
                .ToList();
+
+        //foreach (var item in workflowTasks.SelectMany(x=>x.ContextDisplayFields).ToList())
+        //{
+        //  var  workflowDefinition=WorkflowDefinitionRegistry.Get(item.WorkflowDefinitionId);
+        //    workflowDefinition.States[""].HumanTask.ContextDisplayFields
+        //}
+        return workflowTasks;
     }
 
     public void AssigneTask(Guid taskId, string userRole, string userName)

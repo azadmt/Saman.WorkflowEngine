@@ -3,7 +3,7 @@
 namespace WorkflowBase;
 public class WorkflowEngine
 {
-    private Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
+
     private readonly IWorkflowRepository _workflowRepository;
     private readonly WorkflowTaskService _workflowTaskRepository;
 
@@ -15,15 +15,12 @@ public class WorkflowEngine
 
     public void RegisterWorkflow(IEnumerable<WorkflowDefinition> definitions)
     {
-        foreach (var d in definitions)
-        {
-            _workflowRegistry[d.GetId()] = d;
-        }
+        WorkflowDefinitionRegistry.RegisterWorkflow(definitions);
     }
 
     public WorkflowInstance Start(string workflowName, int workflowVersion, Dictionary<string, object> input)
     {
-        var def = _workflowRegistry[$"{workflowName}-V{workflowVersion}"];
+        var def = WorkflowDefinitionRegistry.Get(workflowName, workflowVersion);
         var instance = new WorkflowInstance
         {
             WorkflowDefinitionId = def.GetId(),
@@ -91,7 +88,7 @@ public class WorkflowEngine
                 {
                     try
                     {
-                        conditionMet =  ExpressionEvaluator
+                        conditionMet = ExpressionEvaluator
                             .EvaluateConditionAsync(t.ConditionExpression, instance.Context)
                             .GetAwaiter()
                             .GetResult();
@@ -104,7 +101,7 @@ public class WorkflowEngine
                 }
                 else
                 {
-                    
+
                     conditionMet = true;
                 }
 
@@ -127,7 +124,7 @@ public class WorkflowEngine
         else if (currentState.Type == StateType.HumanTask)
         {
             instance.Status = WorkflowInstanceStatus.Waiting;
-            _workflowTaskRepository.Add(GetWorkflowTask(instance)); 
+            _workflowTaskRepository.Add(GetWorkflowTask(instance));
 
         }
         else if (currentState.Type == StateType.End)
@@ -149,7 +146,8 @@ public class WorkflowEngine
 
     private void SetCurrentStateDefinition(WorkflowInstance instance)
     {
-        instance.Context.CurrentStateDefinition = _workflowRegistry[instance.WorkflowDefinitionId]
+        instance.Context.CurrentStateDefinition = WorkflowDefinitionRegistry
+            .Get(instance.WorkflowDefinitionId)
             .States[instance.CurrentStateName]
             ;
     }
@@ -165,24 +163,49 @@ public class WorkflowEngine
         stateDefinition
             .HumanTask
             .ContextDisplayFields
-            .ForEach(x=> { x.Value = x.ValueProvider.Invoke(workflowInstance.Context); });
+            .ForEach(x => { x.Value = x.ValueProvider.Invoke(workflowInstance.Context); });
 
         stateDefinition
             .HumanTask
             .Inputs
             .Where(x => x.OptionsDataProvider != null)
             .ToList()
-            .ForEach(x => x.Options= x.OptionsDataProvider.Invoke(workflowInstance.Context));
+            .ForEach(x => x.Options = x.OptionsDataProvider.Invoke(workflowInstance.Context));
         return new WorkflowTask
         {
             Role = stateDefinition.HumanTask.Role,
-            Title=stateDefinition.Title,
+            Title = stateDefinition.Title,
             WorkflowInstanceId = workflowInstance.Id,
+            WorkflowDefinitionId = workflowInstance.WorkflowDefinitionId,
             Inputs = stateDefinition.HumanTask.Inputs,
             Assignee = taskAssignee,
-            ContextDisplayFields= stateDefinition
+            ContextDisplayFields = stateDefinition
             .HumanTask
             .ContextDisplayFields
         };
+    }
+}
+
+
+public static class WorkflowDefinitionRegistry
+{
+    private static Dictionary<string, WorkflowDefinition> _workflowRegistry = new();
+
+    public static void RegisterWorkflow(IEnumerable<WorkflowDefinition> definitions)
+    {
+        foreach (var d in definitions)
+        {
+            _workflowRegistry[d.GetId()] = d;
+        }
+    }
+
+    public static WorkflowDefinition Get(string workflowName, int workflowVersion)
+    {
+        return _workflowRegistry[$"{workflowName}-V{workflowVersion}"];
+    }
+
+    public static WorkflowDefinition Get(string workflowDefinitionId)
+    {
+        return _workflowRegistry[workflowDefinitionId];
     }
 }

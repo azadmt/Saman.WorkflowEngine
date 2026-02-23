@@ -3,6 +3,7 @@ public class WorkflowTask
 {
     public Guid Id { get; set; }= Guid.NewGuid();
     public Guid WorkflowInstanceId { get; set; }
+    public string WorkflowDefinitionId { get; set; }
     public string Title { get; set; }
     public string Role { get; set; }
     public WorkflowTaskStatus Status { get; set; }

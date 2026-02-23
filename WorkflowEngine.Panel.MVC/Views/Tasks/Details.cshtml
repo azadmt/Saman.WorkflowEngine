@@ -33,12 +33,69 @@
             <div class="info-grid">
                 @foreach (var field in Model.ContextDisplayFields.OrderBy(x => x.Order))
                 {
-                    var valueStr = field.Value?.ToString() ?? "-";
-                    if (string.IsNullOrWhiteSpace(valueStr)) continue;
+                    if (field.Value == null)
+                        continue;
 
-                    <div class="info-item">
-                        <label>@field.Label</label>
-                        <div class="value">@valueStr</div>
+                    <div class="display-section mb-4">
+
+                        <div class="display-label">
+                            @field.Label
+                        </div>
+
+                        @* اگر GridColumns دارد و Value لیست است *@
+                        @if (field.GridColumns != null &&
+                                        field.Value is System.Collections.IEnumerable enumerable &&
+                                        !(field.Value is string))
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped custom-table">
+                                    <thead>
+                                        <tr>
+                                            @foreach (var col in field.GridColumns)
+                                            {
+                                                <th>@col.Header</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in enumerable)
+                                        {
+                                            <tr>
+                                                @foreach (var col in field.GridColumns)
+                                                {
+                                                    var prop = item.GetType().GetProperty(col.Field);
+                                                    var val = prop?.GetValue(item);
+
+                                                    if (col.Format != null && val is DateTime dt)
+                                                    {
+                                                        <td>@dt.ToString(col.Format)</td>
+                                                    }
+                                                    else if (val is bool b)
+                                                    {
+                                                        <td>
+                                                            <span class="badge @(b ? "bg-success" : "bg-secondary")">
+                                                                @(b ? "بله" : "خیر")
+                                                            </span>
+                                                        </td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>@val</td>
+                                                    }
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="display-value">
+                                @field.Value
+                            </div>
+                        }
+
                     </div>
                 }
             </div>
