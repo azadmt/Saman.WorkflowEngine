@@ -44,7 +44,7 @@ public class Program
         
         builder.Services.AddControllers();
         var app = builder.Build();
-
+        app.UseCors("AllowLocalhost");
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {

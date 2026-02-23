@@ -121,6 +121,11 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                                 {
                                     Label = "پوشش ها",
                                     Order = 3,
+                                    GridColumns = new List<GridColumn>
+                                    {
+                                        new GridColumn { Header = "کد", Field = "Id" },
+                                        new GridColumn { Header = "نام", Field = "Name" }
+                                    },
                                     ValueProvider = ctx =>
                                     {
                                         var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
@@ -131,6 +136,13 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                                 {
                                     Label = "بیمه شدگان",
                                     Order = 3,
+                                      GridColumns = new List<GridColumn>
+                                    {
+                                       
+                                        new GridColumn { Header = "نام", Field = "Name" },
+                                        new GridColumn { Header = "تاریخ تولد", Field = "BirthDate", Format = "yyyy/MM/dd" },
+                                        new GridColumn { Header = "بیماری زمینه‌ای", Field = "HasUnderlyingDisease" }
+                                    },
                                     ValueProvider = ctx =>
                                     {
                                         var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");

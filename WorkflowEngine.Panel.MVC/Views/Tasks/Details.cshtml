@@ -6,109 +6,113 @@
     ViewData["Title"] = "جزئیات وظیفه";
 }
 
-<h4 class="fw-bold mb-4">
-    @Model.Title
-</h4>
+<div class="task-details-container">
 
-@if (Model.ContextDisplayFields.Any())
-{
-    <div class="card card-clean bg-white p-4 mb-4">
-
-        <div class="section-title">
-            اطلاعات درخواست
+    <!-- Header -->
+    <div class="details-header">
+        <div>
+            <h3 class="details-title">@Model.Title</h3>
+            <span class="status-badge @(Model.Status == WorkflowTaskStatus.Completed ? "done" : "open")">
+                @(Model.Status == WorkflowTaskStatus.Open ? "وظیفه باز" : "تکمیل شده")
+            </span>
         </div>
 
-        <dl class="row g-3 mb-0">
-            @foreach (var field in Model.ContextDisplayFields.OrderBy(x => x.Order))
-            {
-                var valueStr = field.Value?.ToString() ?? "—";
-                if (string.IsNullOrWhiteSpace(valueStr)) continue;
-
-                <dt class="col-sm-4">
-                    @field.Label
-                </dt>
-
-                <dd class="col-sm-8">
-                    @valueStr
-                </dd>
-            }
-        </dl>
-
+        <a href="/Tasks" class="btn btn-light border">
+            بازگشت به لیست
+        </a>
     </div>
-}
 
-@if (Model.Inputs.Any())
-{
-    <div class="card card-clean bg-white p-4">
+    <!-- Context Info -->
+    @if (Model.ContextDisplayFields?.Any() == true)
+    {
+        <div class="clean-card mb-4">
+            <div class="card-section-title">
+                اطلاعات درخواست
+            </div>
 
-        <div class="section-title">
-            تکمیل وظیفه
+            <div class="info-grid">
+                @foreach (var field in Model.ContextDisplayFields.OrderBy(x => x.Order))
+                {
+                    var valueStr = field.Value?.ToString() ?? "-";
+                    if (string.IsNullOrWhiteSpace(valueStr)) continue;
+
+                    <div class="info-item">
+                        <label>@field.Label</label>
+                        <div class="value">@valueStr</div>
+                    </div>
+                }
+            </div>
         </div>
+    }
 
-        <form id="taskForm">
-            <input type="hidden" id="taskId" value="@Model.Id" />
+    <!-- Form Section -->
+    @if (Model.Inputs?.Any() == true && Model.Status == WorkflowTaskStatus.Open)
+    {
+        <div class="clean-card">
+            <div class="card-section-title">
+                تکمیل وظیفه
+            </div>
 
-            @foreach (var input in Model.Inputs)
-            {
-                <div class="mb-4">
-                    <label class="form-label fw-medium">
-                        @input.Lable
-                        @if (input.IsRequired)
-                        {
-                            <span class="text-danger">*</span>
-                        }
-                    </label>
+            <form id="taskForm" class="modern-form">
+                <input type="hidden" id="taskId" value="@Model.Id" />
 
-                    @switch (input.Type)
+                <div class="form-grid">
+                    @foreach (var input in Model.Inputs)
                     {
-                        case WorkflowBase.InputType.Text:
-                            <input type="text" name="@input.Name" class="form-control" />
-                            break;
-
-                        case WorkflowBase.InputType.Number:
-                            <input type="number" name="@input.Name" class="form-control" />
-                            break;
-
-                        case WorkflowBase.InputType.Dropdown:
-                            <select name="@input.Name" class="form-select">
-                                <option value="">انتخاب کنید</option>
-                                @foreach (var opt in input.Options)
+                        <div class="form-field">
+                            <label class="field-label">
+                                @input.Lable
+                                @if (input.IsRequired)
                                 {
-                                    <option value="@opt.Key">@opt.Value</option>
+                                    <span class="required-badge">اجباری</span>
                                 }
-                            </select>
-                            break;
+                            </label>
 
-                        case WorkflowBase.InputType.MultiSelect:
-                            <select multiple name="@input.Name" class="form-select">
-                                @foreach (var opt in input.Options)
-                                {
-                                    <option value="@opt.Key">@opt.Value</option>
-                                }
-                            </select>
-                            break;
+                            @switch (input.Type)
+                            {
+                                case WorkflowBase.InputType.Text:
+                                    <input type="text" name="@input.Name" class="form-control modern-input" />
+                                    break;
 
-                        case WorkflowBase.InputType.FileUpload:
-                            <input type="file" name="@input.Name" class="form-control" />
-                            break;
+                                case WorkflowBase.InputType.Number:
+                                    <input type="number" name="@input.Name" class="form-control modern-input" />
+                                    break;
+
+                                case WorkflowBase.InputType.Dropdown:
+                                    <select name="@input.Name" class="form-select modern-input">
+                                        <option value="">انتخاب کنید</option>
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case WorkflowBase.InputType.MultiSelect:
+                                    <select multiple name="@input.Name" class="form-select modern-input multi-select">
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case WorkflowBase.InputType.FileUpload:
+                                    <input type="file" name="@input.Name" class="form-control modern-input" />
+                                    break;
+                            }
+                        </div>
                     }
                 </div>
-            }
 
-            <div class="d-flex justify-content-end gap-3 pt-3 border-top">
-                <button type="button"
-                        class="btn btn-success"
-                        onclick="submitTask()">
-                    ثبت و تکمیل
-                </button>
-
-                <a href="/Tasks" class="btn btn-outline-secondary">
-                    بازگشت
-                </a>
-            </div>
-            <input type="hidden" id="taskId" value="@Model.Id" />
-        </form>
-    </div>
-}
+                <div class="form-actions">
+                    <button type="button" class="btn btn-success btn-lg px-5" onclick="submitTask()">
+                        ثبت و تکمیل وظیفه
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+</div>
 
 <script src="~/js/task.js"></script>

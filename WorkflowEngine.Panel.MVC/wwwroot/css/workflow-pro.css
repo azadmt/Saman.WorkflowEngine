@@ -1,0 +1,142 @@
+.workflow-container {
+    padding: 30px;
+    background: #f7f9fc;
+    min-height: 100vh;
+}
+
+.wf-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.wf-title {
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.wf-subtitle {
+    color: #6c757d;
+    margin: 0;
+}
+
+.wf-search-box {
+    position: relative;
+    width: 280px;
+}
+
+    .wf-search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 35px;
+        border-radius: 10px;
+        border: 1px solid #e3e6ef;
+    }
+
+    .wf-search-box i {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #999;
+    }
+
+.wf-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.wf-tab {
+    border: none;
+    background: #eef2ff;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .wf-tab.active {
+        background: #4f46e5;
+        color: #fff;
+    }
+
+.wf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+.wf-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #edf0f6;
+    transition: 0.25s;
+    cursor: pointer;
+}
+
+    .wf-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    }
+
+.wf-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wf-status-badge {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+    .wf-status-badge.open {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .wf-status-badge.completed {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+.wf-progress {
+    height: 6px;
+    background: #eef1f6;
+    border-radius: 10px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.wf-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #22c55e);
+}
+.display-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #eef1f6;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+}
+
+.display-label {
+    font-weight: 700;
+    margin-bottom: 14px;
+    border-right: 4px solid #0d6efd;
+    padding-right: 10px;
+}
+
+.custom-table {
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+    .custom-table thead {
+        background: #f8f9fa;
+        font-weight: 600;
+    }

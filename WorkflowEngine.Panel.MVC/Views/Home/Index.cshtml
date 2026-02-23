@@ -2,55 +2,100 @@
 @model List<WorkflowTask>
 
 
+@{
+    ViewData["Title"] = "مدیریت وظایف";
+    var openTasks = Model?.Where(t => t.Status == WorkflowTaskStatus.Open).ToList() ?? new();
+    var completedTasks = Model?.Where(t => t.Status == WorkflowTaskStatus.Completed).ToList() ?? new();
+}
 
+<div class="workflow-container">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold">وظایف من</h4>
-    <span class="text-muted small">@Model.Count وظیفه</span>
-</div>
+    <!-- Top Bar -->
+    <div class="wf-topbar">
+        <div>
+            <h2 class="wf-title">مدیریت وظایف</h2>
+            <p class="wf-subtitle">پیگیری، اقدام و تکمیل وظایف گردش کار</p>
+        </div>
 
-@if (!Model.Any())
-{
-    <div class="card-clean p-5 text-center bg-white">
-        <div class="text-muted">
-            در حال حاضر وظیفه فعالی برای شما ثبت نشده است.
+        <div class="wf-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="taskSearch" placeholder="جستجوی وظیفه..." onkeyup="filterTasks()" />
         </div>
     </div>
-}
-else
-{
-    <div class="row g-4">
-        @foreach (var t in Model)
+
+    <!-- Status Tabs -->
+    <div class="wf-tabs">
+        <button class="wf-tab active" onclick="switchTab('all')">
+            همه (@Model?.Count)
+        </button>
+        <button class="wf-tab" onclick="switchTab('open')">
+            باز (@openTasks.Count)
+        </button>
+        <button class="wf-tab" onclick="switchTab('completed')">
+            تکمیل شده (@completedTasks.Count)
+        </button>
+    </div>
+
+    <!-- Task Grid -->
+    <div class="wf-grid" id="taskGrid">
+        @foreach (var task in Model.OrderByDescending(t => t.CreatedOn))
         {
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-clean p-4 h-100 bg-white">
+            var statusClass = task.Status == WorkflowTaskStatus.Completed ? "completed" : "open";
+            var progress = task.Status == WorkflowTaskStatus.Completed ? 100 : 60;
 
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h6 class="fw-bold mb-0">
-                            @t.Title
-                        </h6>
-                        <span class="badge bg-light text-dark">
-                            @t.Status
-                        </span>
-                    </div>
+            <div class="wf-card"
+                 data-status="@statusClass"
+                 data-title="@task.Title"
+                 onclick="location.href='/Tasks/Details/@task.Id'">
 
-                    <div class="text-muted small mb-2">
-                        نقش: @t.Role
-                    </div>
-
-                    <div class="text-muted small mb-4">
-                        @t.CreatedOn.ToString("yyyy/MM/dd HH:mm")
-                    </div>
-
-                    <div class="mt-auto">
-                        <a href="/Tasks/Details/@t.Id"
-                           class="btn btn-primary w-100">
-                            مشاهده و اقدام
-                        </a>
-                    </div>
-
+                <!-- Header -->
+                <div class="wf-card-header">
+                    <h5 class="wf-card-title">@task.Title</h5>
+                    <span class="wf-status-badge @statusClass">
+                        @(task.Status == WorkflowTaskStatus.Open ? "باز" : "تکمیل شده")
+                    </span>
                 </div>
+
+                <!-- Meta -->
+                <div class="wf-meta">
+                    <div class="wf-meta-item">
+                        <i class="bi bi-person-badge"></i>
+                        <span>@task.Role</span>
+                    </div>
+
+                    <div class="wf-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span>@task.CreatedOn.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+
+                    @if (task.Inputs?.Any() == true)
+                    {
+                        <div class="wf-meta-item">
+                            <i class="bi bi-ui-checks"></i>
+                            <span>@task.Inputs.Count فیلد ورودی</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Progress -->
+                <div class="wf-progress">
+                    <div class="wf-progress-bar" style="width:@progress%"></div>
+                </div>
+
+                <!-- Footer -->
+                <div class="wf-footer">
+                    <span class="wf-id">
+                        #@task.Id.ToString().Substring(0, 8)
+                    </span>
+                    <span class="wf-action">
+                        مشاهده <i class="bi bi-arrow-left"></i>
+                    </span>
+                </div>
+
             </div>
         }
     </div>
-}
+
+</div>
+
+<script src="~/js/workflow.js"></script>

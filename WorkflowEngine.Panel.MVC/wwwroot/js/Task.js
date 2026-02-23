@@ -36,16 +36,18 @@
     });
 
     const payload = {
-        formData: formDataObj
-    };
 
+        formDataObj
+    };
+    console.log(formDataObj);
+    console.log(payload);
     try {
         const response = await fetch(`http://localhost:5020/api/tasks/${taskId}/complete`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(formDataObj)
         });
         console.log(response);
         if (response.ok) {

@@ -1,4 +1,4 @@
-using LiteDB;
+﻿using LiteDB;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text.Json.Serialization;
 
@@ -22,7 +22,16 @@ public class DisplayField
     public int Order { get; set; }
     public string? Format { get; set; }
     public string? CssClass { get; set; }
+
+    public List<GridColumn>? GridColumns { get; set; }
     [BsonIgnore]
     [JsonIgnore]
     public Func<WorkflowContext, object>? ValueProvider { get; init; }
+}
+
+public class GridColumn
+{
+    public string Header { get; set; }   // عنوان ستون
+    public string Field { get; set; }    // نام پراپرتی داخل آبجکت
+    public string? Format { get; set; }
 }
