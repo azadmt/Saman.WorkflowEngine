@@ -1,4 +1,5 @@
 ﻿using WorkflowEngine.Core.Common;
+using WorkflowEngine.Core.Persistence;
 
 namespace WorkflowBase;
 public class WorkflowEngine
@@ -6,11 +7,13 @@ public class WorkflowEngine
 
     private readonly IWorkflowRepository _workflowRepository;
     private readonly WorkflowTaskService _workflowTaskRepository;
+    private readonly LiteDbContext _dbContext;
 
-    public WorkflowEngine(IWorkflowRepository workflowRepository, WorkflowTaskService workflowTaskRepository)
+    public WorkflowEngine(IWorkflowRepository workflowRepository, WorkflowTaskService workflowTaskRepository, LiteDbContext dbContext)
     {
         _workflowRepository = workflowRepository;
         _workflowTaskRepository = workflowTaskRepository;
+        _dbContext = dbContext;
     }
 
     public void RegisterWorkflow(IEnumerable<WorkflowDefinition> definitions)
@@ -33,13 +36,16 @@ public class WorkflowEngine
         }
 
         Execute(instance);
+        _workflowRepository.Add(instance);
+        _dbContext.SaveChanges();
         return instance;
     }
 
     public void Resume(
        Guid instanceId,
        string eventName,
-       Dictionary<string, object> data
+       Dictionary<string, object> data,
+       WorkflowTask workflowTask = null
    )
     {
         var workflowInstance = _workflowRepository.Get(instanceId);
@@ -53,7 +59,13 @@ public class WorkflowEngine
         workflowInstance.CurrentStateName = transition.To;
         workflowInstance.Status = WorkflowInstanceStatus.Running;
 
+        if (workflowTask != null)
+        {
+            _workflowTaskRepository.CompleteTask(workflowTask.Id);
+        }
         Execute(workflowInstance);
+        _workflowRepository.Update(workflowInstance);
+        _dbContext.SaveChanges();
     }
 
     private void Execute(WorkflowInstance instance)
@@ -135,7 +147,7 @@ public class WorkflowEngine
             instance.Status = WorkflowInstanceStatus.Completed;
         }
 
-        _workflowRepository.Save(instance);
+
     }
 
     private async Task RunActivity(IWorkflowActivity act, WorkflowInstance instance)

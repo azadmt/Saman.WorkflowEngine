@@ -16,10 +16,10 @@ namespace WorkflowEngine.Panel.MVC.Controllers
         }
 
         // /Tasks
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string role)
         {
-            var role = User?.Claims?.FirstOrDefault(c => c.Type == "role")?.Value ?? "Doctor";
-            var tasks = await _api.GetTasks(role);
+            var roleName = role ?? "Doctor";
+            var tasks = await _api.GetTasks(roleName);
             return View(tasks);
         }
         public IActionResult Privacy()

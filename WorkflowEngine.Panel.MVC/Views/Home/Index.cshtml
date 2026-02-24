@@ -15,6 +15,12 @@
         <div>
             <h2 class="wf-title">مدیریت وظایف</h2>
             <p class="wf-subtitle">پیگیری، اقدام و تکمیل وظایف گردش کار</p>
+            <select id="drpRole"  class="form-select modern-input" onchange="refreshPage()">
+                <option value="">-----</option>
+                <option value="Doctor">پزشک</option>
+                <option value="Customer">مشتری</option>
+            
+            </select>
         </div>
 
         <div class="wf-search-box">
@@ -97,5 +103,12 @@
     </div>
 
 </div>
+<script>
+    function refreshPage()
+    {
+       var role= document.getElementById("drpRole").value;
+        window.location.href = "http://localhost:5224?role="+role;
+    }
 
+    </script>
 <script src="~/js/workflow.js"></script>

@@ -10,3 +10,10 @@ public class WorkflowStartRequest
     public int WorkflowDefinitionVersion { get; set; }
     public Dictionary<string, JsonElement> Input { get; set; } = new();
 }
+
+
+public class TaskComplete
+{
+    public string Approval { get; set; }
+    public Dictionary<string, JsonElement> Input { get; set; } = new();
+}

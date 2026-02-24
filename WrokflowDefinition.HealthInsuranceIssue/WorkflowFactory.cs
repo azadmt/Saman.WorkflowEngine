@@ -72,9 +72,10 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Title = "بررسی بیمه نامه درمان",
                         Inputs = new List<TaskInput>
                          {
-                        new() { Name = "ExtraRate", Lable = "نرخ اضافی پیشنهادی (%)", Type = InputType.Number },
-                        new() { Name = "MedicalNotes", Lable = "یادداشت‌های پزشکی", Type = InputType.Text },
-                        new() { Name = "RemovedCovers",
+                      
+                        new() { Name = "Doctor_ExtraRate", Lable = "نرخ اضافی پیشنهادی (%)", Type = InputType.Number },
+                        new() { Name = "Doctor_Notes", Lable = "یادداشت‌های پزشکی", Type = InputType.Textarea },
+                        new() { Name = "Doctor_RemovedCovers",
                             Lable = "پوشش ها",
                             Type = InputType.MultiSelect,
                             OptionsDataProvider= ctx =>
@@ -88,10 +89,14 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 
                         },
                         new() {
-                            Name = "ApprovalStatus",
+                            Name = "Doctor_ApprovalStatus",
                             Lable = "وضعیت تأیید",
                             Type = InputType.Dropdown,
-                            Options = new() { new("Approved", "تأیید"), new("Rejected", "رد") }
+                            Options = new() {
+                                new("APPROVE", "تأیید"), 
+                                new("REJECT", "رد") ,
+                                new("REQUEST_CompletingMedicalDocuments", "نیاز به تکمیل مدارک پزشکی")
+                            }
                                }
                           },
                         ContextDisplayFields = new List<DisplayField> {
@@ -157,9 +162,9 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     {
                         new  () { Event = "APPROVE", To = "Approved",Title="تایید" },
                         new  (){
-                            Event = "REQUEST_CompletingMedicalDocuments",
-                            To = "CompletingMedicalDocuments",
-                            Title="تکمیل مدارک" },
+                                    Event = "REQUEST_CompletingMedicalDocuments",
+                                    To = "CompletingMedicalDocuments",
+                                    Title="تکمیل مدارک" },
                         new  (){ Event = "REJECT", To = "Rejected",Title="رد" }
                     }
                 },
@@ -175,9 +180,22 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Inputs = new List<TaskInput>() {
                             new TaskInput { Name = "DocUrl", Type = InputType.FileUpload }
                         },
+                        ContextDisplayFields = new List<DisplayField> {
+                            new()
+                                {
+                                    Label = "کامنت پزشک",
+                                    Order = 1,
+                                    ValueProvider = ctx =>
+                                    {
+                                        var req = ctx.GetData<string>("Doctor_Notes");
+                                        return req;
+                                    }
+                                },
+                        },
                         AutoAssigne = (p) =>
                         {
-                            return p.GetData<HealthPolicyRequest>("PolicyRequest").PolicyHodler.ToString();
+                            var policy= p.GetData<HealthPolicyRequest>("PolicyRequest");
+                            return policy.Insureds[0].Name;
                         }
                     },
                     Transitions =

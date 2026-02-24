@@ -7,6 +7,7 @@ using WorkflowBase;
 public class TaskController : ControllerBase
 {
     private readonly WorkflowBase.WorkflowEngine _engine;
+   
     private readonly WorkflowTaskService _taskService;
 
 
@@ -14,6 +15,7 @@ public class TaskController : ControllerBase
     {
         _engine = engine;
         _taskService = taskService;
+
     }
 
 
@@ -34,7 +36,10 @@ public class TaskController : ControllerBase
     [HttpPost("{id}/complete")]
     public ActionResult<WorkflowTask> Complete(Guid id, Dictionary<string,object> formInput)
     {
-        //var task = _engine.Resume(id);
+
+        var task=_taskService.TaskDetail(id);
+     
+         _engine.Resume(task.WorkflowInstanceId, formInput["Doctor_ApprovalStatus"].ToString(), formInput, task);
         return Ok();
     }
 

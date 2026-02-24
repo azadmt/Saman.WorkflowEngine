@@ -1,5 +1,7 @@
 ﻿@model WorkflowTask
+@using Microsoft.AspNetCore.Html
 @using WorkflowBase
+@using System.Text.Json
 
 
 @{
@@ -41,61 +43,59 @@
                         <div class="display-label">
                             @field.Label
                         </div>
-
-                        @* اگر GridColumns دارد و Value لیست است *@
-                        @if (field.GridColumns != null &&
-                                        field.Value is System.Collections.IEnumerable enumerable &&
-                                        !(field.Value is string))
+                        <div class="display-value">
+                            @field.Value
+                        </div>
+                 @*        @if (field.GridColumns != null && field.Value != null)
                         {
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped custom-table">
-                                    <thead>
-                                        <tr>
-                                            @foreach (var col in field.GridColumns)
-                                            {
-                                                <th>@col.Header</th>
-                                            }
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in enumerable)
-                                        {
+                            var rows = DynamicJsonParser.ParseToObjects(field.Value).ToList();
+
+                            if (rows.Any())
+                            {
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-modern align-middle">
+                                        <thead>
                                             <tr>
                                                 @foreach (var col in field.GridColumns)
                                                 {
-                                                    var prop = item.GetType().GetProperty(col.Field);
-                                                    var val = prop?.GetValue(item);
-
-                                                    if (col.Format != null && val is DateTime dt)
-                                                    {
-                                                        <td>@dt.ToString(col.Format)</td>
-                                                    }
-                                                    else if (val is bool b)
-                                                    {
-                                                        <td>
-                                                            <span class="badge @(b ? "bg-success" : "bg-secondary")">
-                                                                @(b ? "بله" : "خیر")
-                                                            </span>
-                                                        </td>
-                                                    }
-                                                    else
-                                                    {
-                                                        <td>@val</td>
-                                                    }
+                                                    <th>@col.Header</th>
                                                 }
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var row in rows)
+                                            {
+                                                var dict = row as IDictionary<string, object>;
+
+                                                <tr>
+                                                    @foreach (var col in field.GridColumns)
+                                                    {
+                                                        <td>
+                                                            @{
+                                                                object val = null;
+
+                                                                if (dict != null && dict.ContainsKey(col.Field))
+                                                                    val = dict[col.Field];
+                                                            }
+
+                                                            @FormatCell(val)
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
                         }
                         else
                         {
+
                             <div class="display-value">
                                 @field.Value
                             </div>
-                        }
-
+                        } *@
+                        
                     </div>
                 }
             </div>
@@ -128,6 +128,10 @@
                             @switch (input.Type)
                             {
                                 case WorkflowBase.InputType.Text:
+                                    <input type="text" name="@input.Name" class="form-control modern-input" />
+                                    break;
+
+                                case WorkflowBase.InputType.Textarea:
                                     <input type="text" name="@input.Name" class="form-control modern-input" />
                                     break;
 
@@ -173,3 +177,24 @@
 </div>
 
 <script src="~/js/task.js"></script>
+@functions {
+    public object FormatCell(object value)
+    {
+        if (value == null)
+            return "-";
+
+        if (value is bool b)
+        {
+            var badge = b ? "bg-success" : "bg-secondary";
+            var text = b ? "بله" : "خیر";
+            return new HtmlString($"<span class='badge {badge}'>{text}</span>");
+        }
+
+        if (DateTime.TryParse(value.ToString(), out var dt))
+        {
+            return dt.ToString("yyyy/MM/dd");
+        }
+
+        return value.ToString();
+    }
+}

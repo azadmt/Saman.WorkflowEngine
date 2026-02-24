@@ -26,7 +26,7 @@ namespace WrokflowDefinition.HealthInsuranceIssue.DataContract
             for (int i = 1; i < 5; i++)
             {
                 model.MedicalQuestions.Add(new MedicalQuestions { Code = i });
-                model.Covers.Add(new Cover() { Id =  new Random(2).Next(1000, 1999),Name=$"Cover -{i}" });
+                model.Covers.Add(new Cover() { Id =  new Random(2).Next(1000, 1999)*i,Name=$"Cover -{i}" });
                 model.Insureds.Add(new Insured() { Name=$"Insured {i}", BirthDate = DateTime.Now.AddYears(-30) });
             }
             if (withInvlidAgeCount > 0)

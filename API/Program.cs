@@ -1,5 +1,6 @@
 ﻿using LiteDB;
 using WorkflowBase;
+using WorkflowEngine.Core.Persistence;
 using WrokflowDefinition.HealthInsuranceIssue;
 
 namespace API;
@@ -25,7 +26,7 @@ public class Program
             options.AddPolicy("AllowLocalhost", policy =>
             {
                 policy
-                      .WithOrigins("*") // آدرس فرانت
+                      .WithOrigins("*") 
                       .AllowAnyHeader()
                       .AllowAnyMethod();
             });
@@ -39,7 +40,7 @@ public class Program
         builder.Services.AddSingleton<WorkflowTaskService>();
        // builder.Services.AddSingleton<IJsonElementCleaner, JsonElementCleaner>();
         var workflowDb= builder.Configuration.GetValue<string>("DbName");
-        builder.Services.AddSingleton<LiteDatabase>((sp)=> new LiteDatabase(workflowDb));
+        builder.Services.AddSingleton<LiteDbContext>((sp)=> new LiteDbContext(workflowDb));
 
         
         builder.Services.AddControllers();
