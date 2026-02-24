@@ -1,7 +1,7 @@
 ﻿using WorkflowEngine.Core.Common;
 namespace WorkflowBase;
 
-public interface IWorkflowContex : IDataContext
+public interface IWorkflowContext : IDataContext
 {
     IReadOnlyList<TransitionDefinition> GetTransitions();
 }

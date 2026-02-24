@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Serialization;
 using RuleEngine.Base;
 using WorkflowBase;
+using WorkflowEngine.Core.Common.Builder;
 using WrokflowDefinition.HealthInsuranceIssue.Activity;
 using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 using WrokflowDefinition.HealthInsuranceIssue.RuleDefinitions;
@@ -228,6 +229,130 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 }
             }
         };
+    }
+
+    public WorkflowDefinition GetFluentDefinition()
+    {
+        var ruleSetId = "health-underwriting";
+        RegisterRuleSet(ruleSetId);
+
+        return Workflow.Define("health-underwriting", version: 1)
+            .WithRuleSet(ruleSetId)
+            .StartsAt("AutoMedicalCheck")
+
+            // ────────────── State: Start ──────────────
+            .State("Start",StateType.Start)               
+                .On("start")  
+                .GoTo("AutoMedicalCheck")
+                .Done()
+
+            // ────────────── State: AutoMedicalCheck ──────────────
+            .State("AutoMedicalCheck", StateType.Automatic)
+                .Title("بررسی سیستمی شرایط بیمه‌نامه")                
+                .Activity<EvaluateMedicalRiskActivity>()
+                .WhenExpression("GetData<string>(\"RiskLevel\") == \"low\"")
+                    .GoTo("Approved")
+                .WhenExpression("GetData<string>(\"RiskLevel\") == \"medium\"")
+                    .GoTo("WaitingForDoctor")
+                .WhenExpression("GetData<string>(\"RiskLevel\") == \"high\"")
+                    .GoTo("Rejected")
+                .Done()
+
+            // ────────────── State: WaitingForDoctor ──────────────
+            .State("WaitingForDoctor", StateType.HumanTask)
+                .Title("بررسی توسط پزشک")
+                .HumanTask(role: "Doctor", uiContract: "DoctorMedicalReview")
+                    .Title("بررسی بیمه‌نامه درمان")
+
+                    // Inputs
+                    .InputNumber("Doctor_ExtraRate", "نرخ اضافی پیشنهادی (%)")
+                    .InputTextarea("Doctor_Notes", "یادداشت‌های پزشکی")
+
+                    .InputMultiSelectFromContext(
+                        name: "Doctor_RemovedCovers",
+                        label: "پوشش ها",
+                        optionsProvider: ctx =>
+                        {
+                            var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                            return req?.Covers?
+                                .Select(x => new KeyValuePair<string, string>(x.Id.ToString(), x.Name))
+                                .ToList() ?? new List<KeyValuePair<string, string>>();
+                        })
+
+                    .WithDecisionField(configureOptions: dropdown =>
+                    {
+                        dropdown.Options.Add(new("APPROVE", "تأیید"));
+                        dropdown.Options.Add(new("REJECT", "رد"));
+                        dropdown.Options.Add(new("REQUEST_CompletingMedicalDocuments", "نیاز به تکمیل مدارک پزشکی"));
+                    })
+
+                    // Display Fields
+                    .Display("نام بیمه‌گذار", ctx =>
+                    {
+                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                        return req?.Insureds
+                            .FirstOrDefault(x => x.Id == req.PolicyHodler)?
+                            .Name ?? "نامشخص";
+                    }, order: 1)
+
+                    .Display("مبلغ بیمه‌نامه", ctx =>
+                    {
+                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                        return req?.Ammount;
+                    }, order: 2)
+
+                    .DisplayGrid("پوشش ها", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Covers, order: 3)
+                        .Column("کد", "Id")
+                        .Column("نام", "Name")
+                        .Done()
+
+                    .DisplayGrid("بیمه‌شدگان", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Insureds, order: 4)
+                        .Column("نام", "Name")
+                        .Column("تاریخ تولد", "BirthDate", format: "yyyy/MM/dd")
+                        .Column("بیماری زمینه‌ای", "HasUnderlyingDisease")
+                        .Done()
+
+                // Transitions
+                .On("APPROVE")
+                    .GoTo("Approved", title: "تایید")
+                .On("REQUEST_CompletingMedicalDocuments")
+                    .GoTo("CompletingMedicalDocuments", title: "تکمیل مدارک")
+                .On("REJECT")
+                    .GoTo("Rejected", title: "رد")
+                .Done()
+
+            // ────────────── State: CompletingMedicalDocuments ──────────────
+            .State("CompletingMedicalDocuments", StateType.HumanTask)
+                .Title("تکمیل مدارک پزشکی توسط بیمه‌گذار")
+                .HumanTask(role: "Customer", uiContract: "UploadLabResult")
+                    .InputFileUpload("DocUrl", "آپلود مدرک")  // اگر InputFileUpload دارید، یا از InputText با نوع File استفاده کنید
+                    .Display("کامنت پزشک", ctx => ctx.GetData<string>("Doctor_Notes"), order: 1)
+
+                    // AutoAssign
+                    .AutoAssign(ctx =>
+                    {
+                        var policy = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+                        return policy?.Insureds.FirstOrDefault()?.Name;
+                    })
+                .On("MedicalDocuments_UPLOADED")
+                    .GoTo("WaitingForDoctor", title: "ارسال")
+                .Done()
+
+            // ────────────── State: Approved ──────────────
+            .State("Approved")
+                .Title("تایید شده")
+                .End()
+                .Activity<ApproveProposalActivity>()
+                .Done()
+
+            // ────────────── State: Rejected ──────────────
+            .State("Rejected")
+                .Title("ردشده")
+                .End()
+                .Activity<RejectProposalActivity>()
+                .Done()
+
+            .Build();
     }
 
     private void RegisterRuleSet(string rulesetId)

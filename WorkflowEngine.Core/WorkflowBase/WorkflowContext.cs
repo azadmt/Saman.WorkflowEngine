@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using RuleEngine.Base;
 using System.Text.Json;
 namespace WorkflowBase;
-public class WorkflowContext : IWorkflowContex, IRuleContext//؟؟
+public class WorkflowContext : IWorkflowContext, IRuleContext//؟؟
 {
     [JsonProperty]
     public Dictionary<string, string> Data { get; private set; } = new Dictionary<string, string>();

@@ -13,6 +13,8 @@ public class HumanTaskDefinition
     public List<TaskInput> Inputs { get; set; } = new();
     public List<DisplayField> ContextDisplayFields { get; set; } = new();
     public string? ContextHtmlTemplate { get; set; }
+
+    public TaskInput? DecisionInput { get; set; }
 }
 
 public class DisplayField

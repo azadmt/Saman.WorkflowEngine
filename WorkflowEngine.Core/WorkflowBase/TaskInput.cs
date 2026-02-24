@@ -12,7 +12,7 @@ public class TaskInput
     public List<KeyValuePair<string, string>> Options { get; set; } = new();
     [BsonIgnore]
     [JsonIgnore]
-    public Func<IWorkflowContex, List<KeyValuePair<string, string>>> OptionsDataProvider { get; set; } 
+    public Func<IWorkflowContext, List<KeyValuePair<string, string>>> OptionsDataProvider { get; set; } 
 
 }
 
