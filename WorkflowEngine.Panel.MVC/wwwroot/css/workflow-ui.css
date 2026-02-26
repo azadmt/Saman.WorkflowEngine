@@ -1,0 +1,132 @@
+﻿.task-page {
+    padding: 30px;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.task-title {
+    font-weight: 700;
+}
+
+.task-subtitle {
+    color: #6c757d;
+    margin: 0;
+}
+
+.task-stats {
+    display: flex;
+    gap: 10px;
+}
+
+.stat-badge {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+    .stat-badge.open {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .stat-badge.done {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+.task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+.task-card-modern {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 22px;
+    border: 1px solid #eef1f6;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+    .task-card-modern:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    }
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+    .status-badge.open {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.done {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+.clean-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid #eef1f6;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+
+.card-section-title {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 20px;
+    border-right: 4px solid #0d6efd;
+    padding-right: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.field-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.required-badge {
+    background: #ffe2e2;
+    color: #b42318;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 6px;
+}
+
+.modern-input {
+    border-radius: 10px !important;
+    padding: 10px 12px;
+    border: 1px solid #dcdfe6;
+}
+
+    .modern-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+    }
+
+.form-actions {
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    text-align: left;
+}

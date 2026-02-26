@@ -1,0 +1,200 @@
+﻿@model WorkflowTask
+@using Microsoft.AspNetCore.Html
+@using WorkflowBase
+@using System.Text.Json
+
+
+@{
+    ViewData["Title"] = "جزئیات وظیفه";
+}
+
+<div class="task-details-container">
+
+    <!-- Header -->
+    <div class="details-header">
+        <div>
+            <h3 class="details-title">@Model.Title</h3>
+            <span class="status-badge @(Model.Status == WorkflowTaskStatus.Completed ? "done" : "open")">
+                @(Model.Status == WorkflowTaskStatus.Open ? "وظیفه باز" : "تکمیل شده")
+            </span>
+        </div>
+
+        <a href="/Tasks" class="btn btn-light border">
+            بازگشت به لیست
+        </a>
+    </div>
+
+    <!-- Context Info -->
+    @if (Model.ContextDisplayFields?.Any() == true)
+    {
+        <div class="clean-card mb-4">
+            <div class="card-section-title">
+                اطلاعات درخواست
+            </div>
+
+            <div class="info-grid">
+                @foreach (var field in Model.ContextDisplayFields.OrderBy(x => x.Order))
+                {
+                    if (field.Value == null)
+                        continue;
+
+                    <div class="display-section mb-4">
+
+                        <div class="display-label">
+                            @field.Label
+                        </div>
+                        <div class="display-value">
+                            @field.Value
+                        </div>
+                 @*        @if (field.GridColumns != null && field.Value != null)
+                        {
+                            var rows = DynamicJsonParser.ParseToObjects(field.Value).ToList();
+
+                            if (rows.Any())
+                            {
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-modern align-middle">
+                                        <thead>
+                                            <tr>
+                                                @foreach (var col in field.GridColumns)
+                                                {
+                                                    <th>@col.Header</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var row in rows)
+                                            {
+                                                var dict = row as IDictionary<string, object>;
+
+                                                <tr>
+                                                    @foreach (var col in field.GridColumns)
+                                                    {
+                                                        <td>
+                                                            @{
+                                                                object val = null;
+
+                                                                if (dict != null && dict.ContainsKey(col.Field))
+                                                                    val = dict[col.Field];
+                                                            }
+
+                                                            @FormatCell(val)
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+
+                            <div class="display-value">
+                                @field.Value
+                            </div>
+                        } *@
+                        
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Form Section -->
+    @if (Model.Inputs?.Any() == true && Model.Status == WorkflowTaskStatus.Open)
+    {
+        <div class="clean-card">
+            <div class="card-section-title">
+                تکمیل وظیفه
+            </div>
+
+            <form id="taskForm" class="modern-form">
+                <input type="hidden" id="taskId" value="@Model.Id" />
+
+                <div class="form-grid">
+                    @foreach (var input in Model.Inputs)
+                    {
+                        <div class="form-field">
+                            <label class="field-label">
+                                @input.Lable
+                                @if (input.IsRequired)
+                                {
+                                    <span class="required-badge">اجباری</span>
+                                }
+                            </label>
+
+                            @switch (input.Type)
+                            {
+                                case WorkflowBase.InputType.Text:
+                                    <input type="text" name="@input.Name" class="form-control modern-input" />
+                                    break;
+
+                                case WorkflowBase.InputType.Textarea:
+                                    <input type="text" name="@input.Name" class="form-control modern-input" />
+                                    break;
+
+                                case WorkflowBase.InputType.Number:
+                                    <input type="number" name="@input.Name" class="form-control modern-input" />
+                                    break;
+
+                                case WorkflowBase.InputType.Dropdown:
+                                    <select name="@input.Name" class="form-select modern-input">
+                                        <option value="">انتخاب کنید</option>
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case WorkflowBase.InputType.MultiSelect:
+                                    <select multiple name="@input.Name" class="form-select modern-input multi-select">
+                                        @foreach (var opt in input.Options)
+                                        {
+                                            <option value="@opt.Key">@opt.Value</option>
+                                        }
+                                    </select>
+                                    break;
+
+                                case WorkflowBase.InputType.FileUpload:
+                                    <input type="file" name="@input.Name" class="form-control modern-input" />
+                                    break;
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-success btn-lg px-5" onclick="submitTask()">
+                        ثبت و تکمیل وظیفه
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+</div>
+
+<script src="~/js/task.js"></script>
+@functions {
+    public object FormatCell(object value)
+    {
+        if (value == null)
+            return "-";
+
+        if (value is bool b)
+        {
+            var badge = b ? "bg-success" : "bg-secondary";
+            var text = b ? "بله" : "خیر";
+            return new HtmlString($"<span class='badge {badge}'>{text}</span>");
+        }
+
+        if (DateTime.TryParse(value.ToString(), out var dt))
+        {
+            return dt.ToString("yyyy/MM/dd");
+        }
+
+        return value.ToString();
+    }
+}

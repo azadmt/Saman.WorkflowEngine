@@ -1,24 +1,27 @@
 ﻿using System.Reflection;
-using WorkflowCore;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow;
-using WorkflowEngine.ConsoleApp.WorkflowDefinitions.HealthInsuranceIssueWorkflow.DataContract;
+using System.Runtime.CompilerServices;
+using WorkflowBase;
+using WorkflowEngine.Core.Common;
+using WrokflowDefinition.HealthInsuranceIssue;
+using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
 namespace WorkflowEngine.ConsoleApp;
 
 class Program
 {
+
     static void Main()
     {
         Console.WriteLine("=== Health Insurance Workflow Demo ===\n");
 
-
+       
         // 1️⃣ Load workflow definition (normally from DB / JSON)
         var workflowDefinitions = GetAllWorkflowDefinitions();
 
         // 2️⃣ Create engine
-        var workflowTaskRepo = new WorkflowTaskService();
+        var workflowTaskRepo = new WorkflowTaskService(new LiteDB.LiteDatabase("WorkFlowHost.db"));
         var workfloeRepo = new WorkflowRepository();
-        var engine = new WorkflowCore.WorkflowEngine(workfloeRepo, workflowTaskRepo);
+        var engine = new WorkflowBase.WorkflowEngine(workfloeRepo, workflowTaskRepo);
         engine.RegisterWorkflow(workflowDefinitions);
         // 3️⃣ Start workflow instance with initial variables
         var poicyRequest = HealthPolicyRequest.GenerateSample(underlyingDiseaseCount: 1);
@@ -90,7 +93,7 @@ class Program
     private static IEnumerable<WorkflowDefinition> GetAllWorkflowDefinitions()
     {
         var workflowDefiniotionType = typeof(IWorkflowDefinitionFactory);
-        var workflowDefinitions = Assembly.GetExecutingAssembly()
+        var workflowDefinitions = typeof(HealthInsuranceWorkflow).Assembly
     .GetTypes()
     .Where(type => workflowDefiniotionType.IsAssignableFrom(type) && !type.IsInterface);
 
@@ -100,5 +103,22 @@ class Program
 
             yield return instance.GetDefinition();
         }
+    }
+}
+
+public class Activity
+{
+    public Input<int> Id { get; set; } = new();
+
+    public void run()
+    {
+        Id.Get<int>(null);
+    }
+}
+public class Input<T>
+{
+    public T Get<T>( IDataContext dataContext, [CallerMemberName] string memberName = "")
+    {
+        return default(T);
     }
 }

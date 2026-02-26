@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "API\\WorkflowHost.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "HealthInsurance.Api\\HealthInsurance.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "WorkflowEngine.Panel.MVC\\WorkflowEngine.Panel.MVC.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

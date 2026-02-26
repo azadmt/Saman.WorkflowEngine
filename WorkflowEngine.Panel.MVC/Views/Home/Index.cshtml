@@ -1,0 +1,114 @@
+﻿@using WorkflowBase
+@model List<WorkflowTask>
+
+
+@{
+    ViewData["Title"] = "مدیریت وظایف";
+    var openTasks = Model?.Where(t => t.Status == WorkflowTaskStatus.Open).ToList() ?? new();
+    var completedTasks = Model?.Where(t => t.Status == WorkflowTaskStatus.Completed).ToList() ?? new();
+}
+
+<div class="workflow-container">
+
+    <!-- Top Bar -->
+    <div class="wf-topbar">
+        <div>
+            <h2 class="wf-title">مدیریت وظایف</h2>
+            <p class="wf-subtitle">پیگیری، اقدام و تکمیل وظایف گردش کار</p>
+            <select id="drpRole"  class="form-select modern-input" onchange="refreshPage()">
+                <option value="">-----</option>
+                <option value="Doctor">پزشک</option>
+                <option value="Customer">مشتری</option>
+            
+            </select>
+        </div>
+
+        <div class="wf-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="taskSearch" placeholder="جستجوی وظیفه..." onkeyup="filterTasks()" />
+        </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="wf-tabs">
+        <button class="wf-tab active" onclick="switchTab('all')">
+            همه (@Model?.Count)
+        </button>
+        <button class="wf-tab" onclick="switchTab('open')">
+            باز (@openTasks.Count)
+        </button>
+        <button class="wf-tab" onclick="switchTab('completed')">
+            تکمیل شده (@completedTasks.Count)
+        </button>
+    </div>
+
+    <!-- Task Grid -->
+    <div class="wf-grid" id="taskGrid">
+        @foreach (var task in Model.OrderByDescending(t => t.CreatedOn))
+        {
+            var statusClass = task.Status == WorkflowTaskStatus.Completed ? "completed" : "open";
+            var progress = task.Status == WorkflowTaskStatus.Completed ? 100 : 60;
+
+            <div class="wf-card"
+                 data-status="@statusClass"
+                 data-title="@task.Title"
+                 onclick="location.href='/Tasks/Details/@task.Id'">
+
+                <!-- Header -->
+                <div class="wf-card-header">
+                    <h5 class="wf-card-title">@task.Title</h5>
+                    <span class="wf-status-badge @statusClass">
+                        @(task.Status == WorkflowTaskStatus.Open ? "باز" : "تکمیل شده")
+                    </span>
+                </div>
+
+                <!-- Meta -->
+                <div class="wf-meta">
+                    <div class="wf-meta-item">
+                        <i class="bi bi-person-badge"></i>
+                        <span>@task.Role</span>
+                    </div>
+
+                    <div class="wf-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span>@task.CreatedOn.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+
+                    @if (task.Inputs?.Any() == true)
+                    {
+                        <div class="wf-meta-item">
+                            <i class="bi bi-ui-checks"></i>
+                            <span>@task.Inputs.Count فیلد ورودی</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Progress -->
+                <div class="wf-progress">
+                    <div class="wf-progress-bar" style="width:@progress%"></div>
+                </div>
+
+                <!-- Footer -->
+                <div class="wf-footer">
+                    <span class="wf-id">
+                        #@task.Id.ToString().Substring(0, 8)
+                    </span>
+                    <span class="wf-action">
+                        مشاهده <i class="bi bi-arrow-left"></i>
+                    </span>
+                </div>
+
+            </div>
+        }
+    </div>
+
+</div>
+<script>
+    function refreshPage()
+    {
+       var role= document.getElementById("drpRole").value;
+        window.location.href = "http://localhost:5224?role="+role;
+    }
+
+    </script>
+<script src="~/js/workflow.js"></script>

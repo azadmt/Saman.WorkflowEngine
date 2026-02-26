@@ -1,0 +1,98 @@
+﻿@* @using WorkflowBase
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<EditForm Model="FormModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @foreach (var input in Task.Inputs)
+    {
+        <div class="form-group">
+            <label>@input.Lable</label>
+
+            @switch (input.Type)
+            {
+                case InputType.Text:
+                    <InputText @bind-Value="FormModel[input.Name]?.ToString()" class="form-control" />
+                    break;
+
+                case InputType.Number:
+                    <InputNumber @bind-Value="FormModel[input.Name]" class="form-control" />
+                    break;
+
+                case InputType.Date:
+                    <InputDate @bind-Value="FormModel[input.Name]" class="form-control" />
+                    break;
+
+                case InputType.CheckBox:
+                    <InputCheckbox @bind-Value="FormModel[input.Name]" />
+                    break;
+
+                case InputType.Dropdown:
+                    <InputSelect @bind-Value="FormModel[input.Name]" class="form-control">
+                        <option value="">انتخاب کنید</option>
+                        @foreach (var opt in input.Options)
+                        {
+                            <option value="@opt.Key">@opt.Value</option>
+                        }
+                    </InputSelect>
+                    break;
+
+                case InputType.FileUpload:
+                    <InputFile OnChange="@(e => HandleFileSelected(e, input.Name))" />
+                    @if (!string.IsNullOrEmpty(FormModel[input.Name]?.ToString()))
+                    {
+                        <small>فایل آپلود شد: @FormModel[input.Name]</small>
+                    }
+                    break;
+
+                default:
+                    <p>نوع پشتیبانی نمی‌شود: @input.Type</p>
+                    break;
+            }
+
+            <ValidationMessage For="@(() => FormModel[input.Name])" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">ارسال و تکمیل وظیفه</button>
+    <button type="button" @onclick="AddComment" class="btn btn-secondary">اضافه کردن نظر</button>
+</EditForm>
+
+@code {
+    [Parameter] public WorkflowTask Task { get; set; } = default!;
+    private Dictionary<string, object?> FormModel { get; set; } = new();
+
+    protected override void OnParametersSet()
+    {
+        foreach (var input in Task.Inputs)
+            FormModel[input.Name] = null; // مقدار اولیه
+    }
+
+    private async Task HandleSubmit()
+    {
+        await Http.PostAsJsonAsync($"api/tasks/{Task.Id}/complete", FormModel);
+        // هدایت به لیست taskها یا پیام موفقیت
+        Nav.NavigateTo("/tasks");
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e, string fieldName)
+    {
+        var file = e.File;
+        var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(file.OpenReadStream()), "file", file.Name);
+
+        var response = await Http.PostAsync($"api/tasks/{Task.Id}/upload?fieldName={fieldName}", content);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<UploadResult>();
+            FormModel[fieldName] = result?.Url;
+        }
+    }
+
+    private async Task AddComment()
+    {
+        // یک modal باز کن و کامنت بگیر، بعد Post به /comment
+    }
+} *@

@@ -1,30 +1,52 @@
-﻿using API.WFBase;
-using API.WFBase.Persistence;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc;
+using WorkflowBase;
 
 
 [ApiController]
 [Route("api/tasks")]
 public class TaskController : ControllerBase
 {
-    private readonly WorkflowEngine _engine;
-    private readonly WorkflowDbContext _db;
+    private readonly WorkflowBase.WorkflowEngine _engine;
+   
+    private readonly WorkflowTaskService _taskService;
 
 
-    public TaskController(WorkflowEngine engine, WorkflowDbContext db)
+    public TaskController(WorkflowBase.WorkflowEngine engine, WorkflowTaskService taskService)
     {
-        _engine = engine; _db = db;
+        _engine = engine;
+        _taskService = taskService;
+
     }
 
 
     [HttpGet]
-    public async Task<List<WorkflowTaskEntity>> Get([FromQuery] string role)
-    => await _db.Tasks.Where(t => t.Role == role && t.Status == WorkflowTaskStatus.Open).ToListAsync();
+    public ActionResult<List<WorkflowTask>> Get([FromQuery] string role)
+    {
+        var tasks = _taskService.GetAvailableTasks(role, "");
+        return Ok(tasks);
+    }
 
+    [HttpGet("{id}")]
+    public ActionResult<WorkflowTask> Get(Guid id)
+    {
+        var task = _taskService.TaskDetail(id);
+        return Ok(task);
+    }
 
     [HttpPost("{id}/complete")]
-    public async Task Complete(Guid id, [FromBody] object payload)
-    => await _engine.CompleteTask(id, payload);
+    public ActionResult<WorkflowTask> Complete(Guid id, Dictionary<string,object> formInput)
+    {
+
+        var task=_taskService.TaskDetail(id);
+     
+         _engine.Resume(task.WorkflowInstanceId, formInput["Doctor_ApprovalStatus"].ToString(), formInput, task);
+        return Ok();
+    }
+
+    [HttpPost("{id}/Take")]
+    public IActionResult Take(Guid id)
+    {
+        _taskService.AssigneTask(id, "", "");
+        return Ok();
+    }
 }

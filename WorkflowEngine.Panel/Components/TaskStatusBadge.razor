@@ -1,0 +1,22 @@
+﻿@using WorkflowBase
+<span class="badge rounded-pill px-3 py-2 @GetBadgeClass()">
+    @GetStatusText()
+</span>
+
+@code {
+    [Parameter] public WorkflowTaskStatus Status { get; set; }
+
+    private string GetBadgeClass() => Status switch
+    {
+        WorkflowTaskStatus.Open => "bg-warning text-dark",
+        WorkflowTaskStatus.Completed => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusText() => Status switch
+    {
+        WorkflowTaskStatus.Open => "در انتظار اقدام",
+        WorkflowTaskStatus.Completed => "تکمیل شده",
+        _ => "نامشخص"
+    };
+}
