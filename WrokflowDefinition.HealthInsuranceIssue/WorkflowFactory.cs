@@ -322,33 +322,31 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 .Done()
 
             // ────────────── State: CompletingMedicalDocuments ──────────────
-            .State("CompletingMedicalDocuments", StateType.HumanTask)
-                .Title("تکمیل مدارک پزشکی توسط بیمه‌گذار")
-                .HumanTask(role: "Customer", uiContract: "UploadLabResult")
-                    .InputFileUpload("DocUrl", "آپلود مدرک")  // اگر InputFileUpload دارید، یا از InputText با نوع File استفاده کنید
-                    .Display("کامنت پزشک", ctx => ctx.GetData<string>("Doctor_Notes"), order: 1)
+            //.State("CompletingMedicalDocuments", StateType.HumanTask)
+            //    .Title("تکمیل مدارک پزشکی توسط بیمه‌گذار")
+            //    .HumanTask(role: "Customer", uiContract: "UploadLabResult")
+            //        .InputFileUpload("DocUrl", "آپلود مدرک")  // اگر InputFileUpload دارید، یا از InputText با نوع File استفاده کنید
+            //        .Display("کامنت پزشک", ctx => ctx.GetData<string>("Doctor_Notes"), order: 1)
 
-                    // AutoAssign
-                    .AutoAssign(ctx =>
-                    {
-                        var policy = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
-                        return policy?.Insureds.FirstOrDefault()?.Name;
-                    })
-                .On("MedicalDocuments_UPLOADED")
-                    .GoTo("WaitingForDoctor", title: "ارسال")
-                .Done()
+            //        // AutoAssign
+            //        .AutoAssign(ctx =>
+            //        {
+            //            var policy = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+            //            return policy?.Insureds.FirstOrDefault()?.Name;
+            //        })
+            //    .On("MedicalDocuments_UPLOADED")
+            //        .GoTo("WaitingForDoctor", title: "ارسال")
+            //    .Done()
 
             // ────────────── State: Approved ──────────────
-            .State("Approved")
-                .Title("تایید شده")
-                .End()
+            .State("Approved",StateType.End)
+                .Title("تایید شده")                
                 .Activity<ApproveProposalActivity>()
                 .Done()
 
             // ────────────── State: Rejected ──────────────
-            .State("Rejected")
-                .Title("ردشده")
-                .End()
+            .State("Rejected",StateType.End)
+                .Title("ردشده")                
                 .Activity<RejectProposalActivity>()
                 .Done()
 
