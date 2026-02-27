@@ -168,32 +168,45 @@ public class WorkflowEngine
     private static WorkflowTask GetWorkflowTask(WorkflowInstance workflowInstance)
     {
         var stateDefinition = workflowInstance.Context.CurrentStateDefinition;
-        var taskAssignee = stateDefinition.HumanTask.AutoAssigne != null
-                ? stateDefinition?.HumanTask.AutoAssigne.Invoke(workflowInstance.Context)
-                : null;
 
-        stateDefinition
-            .HumanTask
-            .ContextDisplayFields
-            .ForEach(x => { x.Value = x.ValueProvider.Invoke(workflowInstance.Context); });
+        var taskAssignee = stateDefinition.HumanTask.AutoAssigne?.Invoke(workflowInstance.Context);
 
-        stateDefinition
-            .HumanTask
-            .Inputs
-            .Where(x => x.OptionsDataProvider != null)
-            .ToList()
-            .ForEach(x => x.Options = x.OptionsDataProvider.Invoke(workflowInstance.Context));
+        
+        var displayFields = stateDefinition.HumanTask.ContextDisplayFields
+            .Select(x => new DisplayField
+            {
+                Label = x.Label,
+                Order = x.Order,
+                Format = x.Format,
+                CssClass = x.CssClass,
+                GridColumns = x.GridColumns,
+                Value = x.ValueProvider?.Invoke(workflowInstance.Context)
+            })
+            .ToList();
+
+  
+        var inputs = stateDefinition.HumanTask.Inputs
+            .Select(x => new TaskInput
+            {
+                Name = x.Name,
+                Lable = x.Lable,
+                Type = x.Type,
+                IsRequired = x.IsRequired,
+                Options = x.OptionsDataProvider != null
+                    ? x.OptionsDataProvider.Invoke(workflowInstance.Context)
+                    : x.Options.ToList() // 
+            })
+            .ToList();
+
         return new WorkflowTask
         {
             Role = stateDefinition.HumanTask.Role,
             Title = stateDefinition.Title,
             WorkflowInstanceId = workflowInstance.Id,
             WorkflowDefinitionId = workflowInstance.WorkflowDefinitionId,
-            Inputs = stateDefinition.HumanTask.Inputs,
             Assignee = taskAssignee,
-            ContextDisplayFields = stateDefinition
-            .HumanTask
-            .ContextDisplayFields
+            Inputs = inputs,
+            ContextDisplayFields = displayFields
         };
     }
 }

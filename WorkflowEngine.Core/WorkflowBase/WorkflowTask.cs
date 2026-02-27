@@ -13,3 +13,4 @@ public class WorkflowTask
     public List<TaskInput> Inputs { get; set; } = new();  
     public List<DisplayField> ContextDisplayFields { get; set; } = new();
 }
+

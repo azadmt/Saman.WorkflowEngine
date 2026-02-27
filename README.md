@@ -1,4 +1,3 @@
-
 # Workflow Engine Documentation
 
 ## Overview
@@ -12,6 +11,104 @@ The implementation is divided into three main areas:
 3. **WorkflowDefinitions** – Concrete business workflows (example: Health Insurance Issue)
 
 The architecture is fully code-based (no external DSL) and designed for extensibility, testability, and domain-driven usage.
+
+---
+
+## راهنمای استفاده و ساختار پروژه
+
+این بخش راهنمایی عملی برای توسعه‌دهندگان و مصرف‌کنندگان این کتابخانهٔ Workflow Engine فراهم می‌کند: ساختار پروژه، نحوه تعریف و ثبت ورک‌فلوها، اجرای نمونه و نکات عملیاتی و امنیتی.
+
+### مروری کلی
+
+این مخزن شامل یک هستهٔ موتور گردش‌کار (Workflow Engine) است که به شما اجازه می‌دهد:
+- تعریف جریان‌های کاری (workflow definitions) شامل حالت‌های خودکار و وظایف انسانی
+- اجرای جریان‌ها به صورت خودکار و ایجاد وظایف انسانی برای UI
+- نوشتن شرط‌ها و عبارات داینامیک با استفاده از Roslyn scripting
+
+پروژه‌ها و پوشه‌های مهم:
+
+- `WorkflowEngine.Core`  
+  شامل مدل‌های اصلی (`WorkflowDefinition`, `StateDefinition`, `WorkflowInstance`, `WorkflowContext`)، موتور اجرا (`WorkflowEngine`)، و ابزارهایی مانند `ExpressionEvaluator` و `WorkflowBuilder`.
+
+- `WorkflowEngine.Panel` / `WorkflowEngine.Panel.MVC`  
+  رابط کاربری برای نمایش و تکمیل وظایف انسانی (مثلاً `Views/Tasks/Details.cshtml`)
+
+- `WrokflowDefinition.*`  
+  نمونه‌های تعریف‌شده از ورک‌فلوها (مثل `HealthInsuranceIssue`) که نشان‌دهندهٔ استفاده از Fluent Builder و حالت‌های HumanTask و Automatic است.
+
+- `WorkflowEngine.Core.Persistence`  
+  پیاده‌سازی LiteDB برای ذخیرهٔ نمونه‌ها، تاریخچه و وظایف. این لایه قابل جایگزینی است.
+
+### نحوه تعریف و ثبت یک ورک‌فلو
+
+می‌توانید با دو روش ورک‌فلو را تعریف کنید:
+1. به صورت شیء `WorkflowDefinition` و پر کردن `States` و `Transitions`.
+2. با Fluent Builder: `Workflow.Define(...).State(...).WhenExpression(...).Build()`.
+
+نمونهٔ ثبت در کد:
+
+// ساختن تعاریف
+var definitions = new[] { new HealthInsuranceWorkflow().GetFluentDefinition() };
+// ثبت در Registry
+var engine = new WorkflowEngine(workflowRepo, taskService, dbContext);
+engine.RegisterWorkflow(definitions);
+
+### اجرای یک ورک‌فلو (Start)
+
+برای شروع یک نمونهٔ جدید:
+
+var inputs = new Dictionary<string, object> { ["PolicyRequest"] = policyRequest };
+var instance = engine.Start("health-underwriting", 1, inputs);
+
+موتور مقادیر ورودی را در `WorkflowContext` ذخیره می‌کند و اجرای خودکار را آغاز می‌نماید تا زمانی که به حالت HumanTask یا End برسد.
+
+### تکمیل وظایف انسانی (Human Tasks)
+
+وقتی که به حالت `HumanTask` می‌رسیم، موتور یک `WorkflowTask` تولید و در پایگاه داده ثبت می‌کند. UI مسئول نمایش `Inputs` و `ContextDisplayFields` است.
+
+برای تکمیل وظیفه، کنترلر باید ورودی‌ها را به `Resume` پاس دهد:
+
+await controller.Resume(instanceId, "APPROVE", new Dictionary<string, object> { ["Doctor_Notes"] = "..." });
+
+در صورتی که رزومه با یک `WorkflowTask` همراه باشد، `WorkflowTaskService` آن را می‌بندد.
+
+### نوشتن شرط‌ها با ExpressionEvaluator
+
+شما می‌توانید از `WhenExpression("GetData<string(\"RiskLevel\") == \"low\"")` استفاده کنید. عبارت‌ها با Roslyn کامپایل و cache می‌شوند تا عملکرد بهتری داشته باشند.
+
+احتیاط امنیتی: عبارات به صورت کامل دسترسی به فضای نام‌هایی که به `ScriptOptions` اضافه شده‌اند دارند، بنابراین از ورود عبارات از منابع غیرقابل اعتماد خودداری کنید.
+
+### نکات مهم و قراردادهای پروژه
+
+- زمان‌ها: از `DateTimeOffset.UtcNow` برای ذخیرهٔ زمان‌ها استفاده کنید تا مشکلات منطقه زمانی حذف شوند.
+- Thread-safety: Registryهای داخلی باید thread-safe باشند (ConcurrentDictionary). در حالت تولیدی از قفل یا مکانیزم نسخه‌بندی برای جلوگیری از race condition استفاده کنید.
+- خطاها: از `SingleOrDefault()` و بررسی مقدار بازگشتی برای جلوگیری از خطاهای `InvalidOperationException` استفاده کنید و پیام‌های معنی‌دار بدهید.
+- امنیت اسکریپت: اگر عبارات از کاربران غیرقابل اعتماد ساخته می‌شود، بهتر است محیط اجرای آنها را محدود یا از فرایند جداگانه استفاده کنید.
+- حلقه‌های بی‌نهایت: موتور فعلی بازگشتی است؛ برای جلوگیری از حلقه‌های نامتناهی، محدودیت تعداد انتقال‌ها در هر اجرا (مثلاً 100) یا تشخیص حلقه پیشنهاد می‌شود.
+
+### تست و CI
+
+- برای تست واحد، از repositoryهای جایگزین یا mock برای `IWorkflowRepository` و `LiteDbContext` استفاده کنید.
+- سناریوهای کلیدی برای پوشش تست:
+  - ارزیابی عبارات (صحیح/خطا)
+  - مسیرهای اتوماتیک با چند شرط (low/medium/high)
+  - تولید و تکمیل `WorkflowTask` و تغییر وضعیت نمونه
+  - حالت‌های خطا (transition ناموجود، رفتار در صورت خطای اجرای activity)
+
+### راهنمای مشارکت (Contributing)
+
+- قبل از ارسال Pull Request، تست‌های واحد مربوطه را اضافه کنید.
+- قواعد سبک: فایل `.editorconfig` را رعایت کنید (indentation و نام‌گذاری).
+- در صورت تغییر مدل‌های ذخیره‌سازی، Migrations یا راهنمای بروز رسانی DB را به مستندات اضافه کنید.
+
+### مثال سریع (Flow کامل)
+
+1. ثبت ورک‌فلو از `WrokflowDefinition.HealthInsuranceIssue` در startup.
+2. `engine.Start("health-underwriting", 1, inputs)` اجرا می‌شود.
+3. موتور به حالت `AutoMedicalCheck` می‌رود، `EvaluateMedicalRiskActivity` اجرا می‌شود.
+4. اگر ریسک متوسط باشد، موتور وظیفه‌ای برای نقش `Doctor` ایجاد می‌کند.
+5. UI وظیفه را نمایش می‌دهد؛ پزشک تصمیم را گرفته و فرم را ارسال می‌کند.
+6. Controller با `engine.Resume(...)` ادامهٔ جریان را انجام می‌دهد.
 
 ---
 
