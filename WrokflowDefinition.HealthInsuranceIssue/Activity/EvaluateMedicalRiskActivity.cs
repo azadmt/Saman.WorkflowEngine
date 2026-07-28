@@ -21,6 +21,6 @@ public class EvaluateMedicalRiskActivity : IWorkflowActivity
         if (!ruleresult.HasBlockers && ruleresult.HasWarnings)
             riskLevel = "medium";
 
-        context.SetData("RiskLevel", riskLevel);
+        context.SetData("RiskLevel", riskLevel);//Save To DB
     }
 }

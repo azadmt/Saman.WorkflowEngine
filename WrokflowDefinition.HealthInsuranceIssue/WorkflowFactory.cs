@@ -12,13 +12,18 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
 {
     public WorkflowDefinition GetDefinition()
     {
-        var rulsetId = "health-underwriting";
-        RegisterRuleSet(rulsetId);
+        var rulesetId = "health-underwriting";
+        RegisterRuleSet(rulesetId);
+      //  return GetDefinition(rulesetId);
+         return GetFluentDefinition(rulesetId);
+    }
+    public WorkflowDefinition GetDefinition(string rulesetId)
+    {
         return new WorkflowDefinition
         {
             Name = "health-underwriting",
             Version = 1,
-            RuleSetId = rulsetId,
+            RuleSetId = rulesetId,
             StartState = "AutoMedicalCheck",
             States = new Dictionary<string, StateDefinition>
             {
@@ -33,7 +38,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                 ["AutoMedicalCheck"] = new StateDefinition
                 {
                     Title = "بررسی سیستمی شرایط بیمه نامه",
-                    RulesetId = rulsetId,
+                    RulesetId = rulesetId,
                     Type = StateType.Automatic,
                     Activities =
                     {
@@ -73,7 +78,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         Title = "بررسی بیمه نامه درمان",
                         Inputs = new List<TaskInput>
                          {
-                      
+
                         new() { Name = "Doctor_ExtraRate", Lable = "نرخ اضافی پیشنهادی (%)", Type = InputType.Number },
                         new() { Name = "Doctor_Notes", Lable = "یادداشت‌های پزشکی", Type = InputType.Textarea },
                         new() { Name = "Doctor_RemovedCovers",
@@ -94,7 +99,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                             Lable = "وضعیت تأیید",
                             Type = InputType.Dropdown,
                             Options = new() {
-                                new("APPROVE", "تأیید"), 
+                                new("APPROVE", "تأیید"),
                                 new("REJECT", "رد") ,
                                 new("REQUEST_CompletingMedicalDocuments", "نیاز به تکمیل مدارک پزشکی")
                             }
@@ -137,14 +142,14 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                                         var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
                                         return req?.Covers;
                                     }
-                                },                            
+                                },
                             new()
                                 {
                                     Label = "بیمه شدگان",
                                     Order = 3,
                                       GridColumns = new List<GridColumn>
                                     {
-                                       
+
                                         new GridColumn { Header = "نام", Field = "Name" },
                                         new GridColumn { Header = "تاریخ تولد", Field = "BirthDate", Format = "yyyy/MM/dd" },
                                         new GridColumn { Header = "بیماری زمینه‌ای", Field = "HasUnderlyingDisease" }
@@ -195,7 +200,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                         },
                         AutoAssigne = (p) =>
                         {
-                            var policy= p.GetData<HealthPolicyRequest>("PolicyRequest");
+                            var policy = p.GetData<HealthPolicyRequest>("PolicyRequest");
                             return policy.Insureds[0].Name;
                         }
                     },
@@ -230,8 +235,7 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
             }
         };
     }
-
-    public WorkflowDefinition GetFluentDefinition()
+    public WorkflowDefinition GetFluentDefinition(string rulesetId)
     {
         var ruleSetId = "health-underwriting";
         RegisterRuleSet(ruleSetId);
@@ -239,17 +243,17 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
         return Workflow.Define("health-underwriting", version: 1)
             .WithRuleSet(ruleSetId)
             .StartsAt("AutoMedicalCheck")
-
+         
             // ────────────── State: Start ──────────────
-            .State("Start",StateType.Start)               
-                .On("start")  
+            .State("Start", StateType.Start,"شروع")
+                .On("start")
                 .GoTo("AutoMedicalCheck")
                 .Done()
 
             // ────────────── State: AutoMedicalCheck ──────────────
-            .State("AutoMedicalCheck", StateType.Automatic)
-                .Title("بررسی سیستمی شرایط بیمه‌نامه")                
+            .State("AutoMedicalCheck", StateType.Automatic, "بررسی سیستمی شرایط بیمه‌نامه")
                 .Activity<EvaluateMedicalRiskActivity>()
+                .WithRuleset(rulesetId)
                 .WhenExpression("GetData<string>(\"RiskLevel\") == \"low\"")
                     .GoTo("Approved")
                 .WhenExpression("GetData<string>(\"RiskLevel\") == \"medium\"")
@@ -258,97 +262,95 @@ public class HealthInsuranceWorkflow : IWorkflowDefinitionFactory
                     .GoTo("Rejected")
                 .Done()
 
+        #region
             // ────────────── State: WaitingForDoctor ──────────────
-            .State("WaitingForDoctor", StateType.HumanTask)
-                .Title("بررسی توسط پزشک")
-                .HumanTask(role: "Doctor", uiContract: "DoctorMedicalReview")
-                    .Title("بررسی بیمه‌نامه درمان")
+            //.State("WaitingForDoctor", StateType.HumanTask)
+            //    .Title("بررسی توسط پزشک")
+            //    .HumanTask(role: "Doctor", uiContract: "DoctorMedicalReview")
+            //        .Title("بررسی بیمه‌نامه درمان")
 
-                    // Inputs
-                    .InputNumber("Doctor_ExtraRate", "نرخ اضافی پیشنهادی (%)")
-                    .InputTextarea("Doctor_Notes", "یادداشت‌های پزشکی")
+            //        // Inputs
+            //        .InputNumber("Doctor_ExtraRate", "نرخ اضافی پیشنهادی (%)")
+            //        .InputTextarea("Doctor_Notes", "یادداشت‌های پزشکی")
 
-                    .InputMultiSelectFromContext(
-                        name: "Doctor_RemovedCovers",
-                        label: "پوشش ها",
-                        optionsProvider: ctx =>
-                        {
-                            var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
-                            return req?.Covers?
-                                .Select(x => new KeyValuePair<string, string>(x.Id.ToString(), x.Name))
-                                .ToList() ?? new List<KeyValuePair<string, string>>();
-                        })
+            //        .InputMultiSelectFromContext(
+            //            name: "Doctor_RemovedCovers",
+            //            label: "پوشش ها",
+            //            optionsProvider: ctx =>
+            //            {
+            //                var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+            //                return req?.Covers?
+            //                    .Select(x => new KeyValuePair<string, string>(x.Id.ToString(), x.Name))
+            //                    .ToList() ?? new List<KeyValuePair<string, string>>();
+            //            })
 
-                    .WithDecisionField(configureOptions: dropdown =>
-                    {
-                        dropdown.Options.Add(new("APPROVE", "تأیید"));
-                        dropdown.Options.Add(new("REJECT", "رد"));
-                        dropdown.Options.Add(new("REQUEST_CompletingMedicalDocuments", "نیاز به تکمیل مدارک پزشکی"));
-                    })
+            //        .WithDecisionField(configureOptions: dropdown =>
+            //        {
+            //            dropdown.Options.Add(new("APPROVE", "تأیید"));
+            //            dropdown.Options.Add(new("REJECT", "رد"));
+            //            dropdown.Options.Add(new("REQUEST_CompletingMedicalDocuments", "نیاز به تکمیل مدارک پزشکی"));
+            //        })
 
-                    // Display Fields
-                    .Display("نام بیمه‌گذار", ctx =>
-                    {
-                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
-                        return req?.Insureds
-                            .FirstOrDefault(x => x.Id == req.PolicyHodler)?
-                            .Name ?? "نامشخص";
-                    }, order: 1)
+            //        // Display Fields
+            //        .Display("نام بیمه‌گذار", ctx =>
+            //        {
+            //            var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+            //            return req?.Insureds
+            //                .FirstOrDefault(x => x.Id == req.PolicyHodler)?
+            //                .Name ?? "نامشخص";
+            //        }, order: 1)
 
-                    .Display("مبلغ بیمه‌نامه", ctx =>
-                    {
-                        var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
-                        return req?.Ammount;
-                    }, order: 2)
+            //        .Display("مبلغ بیمه‌نامه", ctx =>
+            //        {
+            //            var req = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+            //            return req?.Ammount;
+            //        }, order: 2)
 
-                    .DisplayGrid("پوشش ها", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Covers, order: 3)
-                        .Column("کد", "Id")
-                        .Column("نام", "Name")
-                        .Done()
+            //        .DisplayGrid("پوشش ها", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Covers, order: 3)
+            //            .Column("کد", "Id")
+            //            .Column("نام", "Name")
+            //            .Done()
 
-                    .DisplayGrid("بیمه‌شدگان", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Insureds, order: 4)
-                        .Column("نام", "Name")
-                        .Column("تاریخ تولد", "BirthDate", format: "yyyy/MM/dd")
-                        .Column("بیماری زمینه‌ای", "HasUnderlyingDisease")
-                        .Done()
+            //        .DisplayGrid("بیمه‌شدگان", ctx => ctx.GetData<HealthPolicyRequest>("PolicyRequest")?.Insureds, order: 4)
+            //            .Column("نام", "Name")
+            //            .Column("تاریخ تولد", "BirthDate", format: "yyyy/MM/dd")
+            //            .Column("بیماری زمینه‌ای", "HasUnderlyingDisease")
+            //            .Done()
 
-                // Transitions
-                .On("APPROVE")
-                    .GoTo("Approved", title: "تایید")
-                .On("REQUEST_CompletingMedicalDocuments")
-                    .GoTo("CompletingMedicalDocuments", title: "تکمیل مدارک")
-                .On("REJECT")
-                    .GoTo("Rejected", title: "رد")
-                .Done()
+            //    // Transitions
+            //    .On("APPROVE")
+            //        .GoTo("Approved", title: "تایید")
+            //    .On("REQUEST_CompletingMedicalDocuments")
+            //        .GoTo("CompletingMedicalDocuments", title: "تکمیل مدارک")
+            //    .On("REJECT")
+            //        .GoTo("Rejected", title: "رد")
+            //    .Done()
 
             // ────────────── State: CompletingMedicalDocuments ──────────────
-            .State("CompletingMedicalDocuments", StateType.HumanTask)
-                .Title("تکمیل مدارک پزشکی توسط بیمه‌گذار")
-                .HumanTask(role: "Customer", uiContract: "UploadLabResult")
-                    .InputFileUpload("DocUrl", "آپلود مدرک")  // اگر InputFileUpload دارید، یا از InputText با نوع File استفاده کنید
-                    .Display("کامنت پزشک", ctx => ctx.GetData<string>("Doctor_Notes"), order: 1)
+            //.State("CompletingMedicalDocuments", StateType.HumanTask)
+            //    .Title("تکمیل مدارک پزشکی توسط بیمه‌گذار")
+            //    .HumanTask(role: "Customer", uiContract: "UploadLabResult")
+            //        //.InputFileUpload("DocUrl", "آپلود مدرک")  // اگر InputFileUpload دارید، یا از InputText با نوع File استفاده کنید
+            //        //.Display("کامنت پزشک", ctx => ctx.GetData<string>("Doctor_Notes"), order: 1)
 
-                    // AutoAssign
-                    .AutoAssign(ctx =>
-                    {
-                        var policy = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
-                        return policy?.Insureds.FirstOrDefault()?.Name;
-                    })
-                .On("MedicalDocuments_UPLOADED")
-                    .GoTo("WaitingForDoctor", title: "ارسال")
-                .Done()
-
+            //        // AutoAssign
+            //        .AutoAssign(ctx =>
+            //        {
+            //            var policy = ctx.GetData<HealthPolicyRequest>("PolicyRequest");
+            //            return policy?.Insureds.FirstOrDefault()?.Name;
+            //        })
+            //    .On("MedicalDocuments_UPLOADED")
+            //        .GoTo("WaitingForDoctor", title: "ارسال")
+            //    .Done()
+        #endregion
             // ────────────── State: Approved ──────────────
-            .State("Approved")
-                .Title("تایید شده")
-                .End()
+            .State(id: "Approved", stateType: StateType.End, "تایید شده")
                 .Activity<ApproveProposalActivity>()
                 .Done()
 
-            // ────────────── State: Rejected ──────────────
-            .State("Rejected")
-                .Title("ردشده")
-                .End()
+            //// ────────────── State: Rejected ──────────────
+            .State(id: "Rejected", stateType: StateType.End, "ردشده")
+
                 .Activity<RejectProposalActivity>()
                 .Done()
 

@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using WorkflowBase;
 using WorkflowEngine.Core.Common;
+using WorkflowEngine.Core.Persistence;
 using WrokflowDefinition.HealthInsuranceIssue;
 using WrokflowDefinition.HealthInsuranceIssue.DataContract;
 
@@ -19,9 +20,10 @@ class Program
         var workflowDefinitions = GetAllWorkflowDefinitions();
 
         // 2️⃣ Create engine
-        var workflowTaskRepo = new WorkflowTaskService(new LiteDB.LiteDatabase("WorkFlowHost.db"));
+        var dbContext = new LiteDbContext("WorkFlowHost.db");
+        var workflowTaskRepo = new WorkflowTaskService(dbContext);
         var workfloeRepo = new WorkflowRepository();
-        var engine = new WorkflowBase.WorkflowEngine(workfloeRepo, workflowTaskRepo);
+        var engine = new WorkflowBase.WorkflowEngine(workfloeRepo, workflowTaskRepo, dbContext);
         engine.RegisterWorkflow(workflowDefinitions);
         // 3️⃣ Start workflow instance with initial variables
         var poicyRequest = HealthPolicyRequest.GenerateSample(underlyingDiseaseCount: 1);

@@ -37,10 +37,11 @@ namespace WorkflowEngine.Core.Common.Builder
             return this;
         }
 
-        public StateBuilder State(string id,StateType stateType)
+        public StateBuilder State(string id, StateType stateType, string title)
         {
             var state = new StateDefinition();
-            state.Type=stateType;
+            state.Type = stateType;
+            state.Title = title;
             _def.States[id] = state;
             return new StateBuilder(this, state);
         }
@@ -50,6 +51,8 @@ namespace WorkflowEngine.Core.Common.Builder
             if (string.IsNullOrEmpty(_def.StartState))
                 throw new InvalidOperationException("Start state is required");
 
+            if (!_def.States.Any(x => x.Value.Type == StateType.End))
+                throw new InvalidOperationException("final state is required");
             return _def;
         }
     }
@@ -84,7 +87,7 @@ namespace WorkflowEngine.Core.Common.Builder
                 Options = new List<KeyValuePair<string, string>>()
             };
 
-         
+
 
             configureOptions?.Invoke(decision);
 
@@ -98,12 +101,17 @@ namespace WorkflowEngine.Core.Common.Builder
             return this;
         }
 
-        public StateBuilder Title(string title)
+        //public StateBuilder Title(string title)
+        //{
+        //    State.Title = title;
+        //    return this;
+        //}
+
+        public StateBuilder WithRuleset(string ruleSetId)
         {
-            State.Title = title;
+            State.RulesetId = ruleSetId;
             return this;
         }
-
         //public StateBuilder Automatic()
         //{
         //    State.Type = StateType.Automatic;
